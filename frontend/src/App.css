@@ -1,0 +1,252 @@
+:root {
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  color: #1e293b;
+  background:
+    radial-gradient(circle at top left, rgba(245, 158, 11, 0.35), transparent 30%),
+    radial-gradient(circle at bottom right, rgba(14, 116, 144, 0.25), transparent 35%),
+    linear-gradient(135deg, #fff7ed 0%, #fffbeb 35%, #f8fafc 100%);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+}
+
+button {
+  font: inherit;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+.app-shell {
+  display: grid;
+  grid-template-columns: minmax(280px, 420px) minmax(320px, 1fr);
+  gap: 2rem;
+  padding: 2rem;
+  min-height: 100vh;
+}
+
+.hero-panel,
+.board-panel {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 28px;
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.12);
+}
+
+.hero-panel {
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.eyebrow {
+  margin: 0 0 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  font-size: 0.78rem;
+  color: #b45309;
+}
+
+.hero-panel h1 {
+  margin: 0;
+  font-size: clamp(2.2rem, 5vw, 3.8rem);
+  line-height: 0.95;
+}
+
+.hero-copy {
+  margin: 1.25rem 0 0;
+  line-height: 1.7;
+  color: #475569;
+}
+
+.mode-switch {
+  display: inline-flex;
+  gap: 0.5rem;
+  margin-top: 1.5rem;
+  padding: 0.35rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.mode-button,
+.ghost-button {
+  padding: 0.8rem 1.15rem;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  background: rgba(255, 255, 255, 0.75);
+  color: #1e293b;
+  cursor: pointer;
+}
+
+.mode-button-active {
+  background: linear-gradient(135deg, #ea580c, #0f766e);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 12px 24px rgba(15, 118, 110, 0.18);
+}
+
+.info-grid {
+  display: grid;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.info-card {
+  padding: 1rem 1.1rem;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+}
+
+.info-label {
+  display: block;
+  margin-bottom: 0.45rem;
+  color: #64748b;
+  font-size: 0.88rem;
+}
+
+.action-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: center;
+  margin-top: 2rem;
+}
+
+.arena-panel {
+  margin-top: 1.5rem;
+}
+
+.field-label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #475569;
+  font-size: 0.92rem;
+}
+
+.number-input {
+  width: 100%;
+  max-width: 180px;
+  padding: 0.85rem 1rem;
+  border-radius: 16px;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  background: rgba(255, 255, 255, 0.85);
+  color: #0f172a;
+}
+
+.primary-button {
+  padding: 0.85rem 1.4rem;
+  border: none;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #ea580c, #0f766e);
+  color: #fff;
+  cursor: pointer;
+  box-shadow: 0 18px 40px rgba(15, 118, 110, 0.2);
+}
+
+.primary-button:disabled,
+.ghost-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.arena-summary {
+  display: grid;
+  gap: 0.85rem;
+  margin-top: 1.5rem;
+}
+
+.summary-item {
+  padding: 0.95rem 1rem;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(148, 163, 184, 0.24);
+}
+
+.path-text {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  word-break: break-all;
+}
+
+.hint-text {
+  color: #64748b;
+}
+
+.board-panel {
+  padding: 1.5rem;
+  overflow: auto;
+}
+
+.board {
+  display: grid;
+  grid-template-columns: repeat(15, minmax(28px, 42px));
+  gap: 4px;
+  justify-content: center;
+  padding: 0.5rem;
+}
+
+.square {
+  width: min(5vw, 42px);
+  height: min(5vw, 42px);
+  min-width: 28px;
+  min-height: 28px;
+  border: 1px solid rgba(180, 83, 9, 0.2);
+  border-radius: 12px;
+  background: rgba(255, 251, 235, 0.9);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: transform 160ms ease, background 160ms ease, box-shadow 160ms ease;
+}
+
+.square:hover:enabled {
+  transform: translateY(-1px);
+  background: #ffffff;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+}
+
+.square:disabled {
+  cursor: default;
+}
+
+.square-highlight {
+  box-shadow: 0 0 0 2px rgba(15, 118, 110, 0.35);
+}
+
+.stone {
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.stone-human {
+  color: #b91c1c;
+}
+
+.stone-ai {
+  color: #0f766e;
+}
+
+@media (max-width: 960px) {
+  .app-shell {
+    grid-template-columns: 1fr;
+    padding: 1rem;
+  }
+
+  .hero-panel,
+  .board-panel {
+    padding: 1.25rem;
+  }
+}

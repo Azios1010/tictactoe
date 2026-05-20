@@ -4,6 +4,7 @@ import Board from './components/Board'
 const BOARD_SIZE = 15
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? ''
 const ARENA_API_BASE_URL = import.meta.env.VITE_ARENA_API_BASE_URL ?? 'http://127.0.0.1:8100'
+const difficultyOptions = ['easy', 'medium', 'hard']
 
 const directions = [
   [1, 0],
@@ -67,6 +68,14 @@ function formatWinner(value) {
   return 'Draw'
 }
 
+function formatDifficulty(value) {
+  return value.charAt(0).toUpperCase() + value.slice(1)
+}
+
+function formatReason(value) {
+  return value.replaceAll('_', ' ')
+}
+
 function App() {
   const [mode, setMode] = useState('play')
   const [board, setBoard] = useState(createEmptyBoard)
@@ -75,6 +84,9 @@ function App() {
   const [gameOver, setGameOver] = useState(false)
   const [lastMove, setLastMove] = useState(null)
   const [aiEvaluation, setAiEvaluation] = useState(0)
+  const [aiReason, setAiReason] = useState('ready')
+  const [aiCompletedDepth, setAiCompletedDepth] = useState(0)
+  const [difficulty, setDifficulty] = useState('medium')
   const [arenaBatchSize, setArenaBatchSize] = useState(10)
   const [arenaSummary, setArenaSummary] = useState(null)
   const [arenaPlayback, setArenaPlayback] = useState([])
@@ -123,6 +135,8 @@ function App() {
     setGameOver(false)
     setLastMove(null)
     setAiEvaluation(0)
+    setAiReason('ready')
+    setAiCompletedDepth(0)
   }
 
   function resetArenaBoard(message = 'Arena ready. Run self-play to collect new samples.') {
@@ -132,6 +146,8 @@ function App() {
     setGameOver(false)
     setLastMove(null)
     setAiEvaluation(0)
+    setAiReason('ready')
+    setAiCompletedDepth(0)
     setArenaPlayback([])
   }
 
@@ -156,7 +172,8 @@ function App() {
         },
         body: JSON.stringify({
           board: nextBoard,
-          player: 1
+          player: 1,
+          difficulty
         })
       })
 
@@ -166,6 +183,8 @@ function App() {
 
       const data = await response.json()
       setAiEvaluation(data.evaluation)
+      setAiReason(data.reason ?? 'best_search_score')
+      setAiCompletedDepth(data.completed_depth ?? 0)
 
       if (data.row == null || data.col == null) {
         setStatus('The game is already finished.')
@@ -179,7 +198,7 @@ function App() {
         return updatedBoard
       })
       setLastMove({ row: data.row, col: data.col })
-      setStatus(`AI played row ${data.row + 1}, col ${data.col + 1}.`)
+      setStatus(`AI played row ${data.row + 1}, col ${data.col + 1}. ${formatReason(data.reason ?? 'best_search_score')}.`)
     } catch (error) {
       if (error instanceof TypeError) {
         setStatus('Backend is unreachable. Start FastAPI on port 8000.')
@@ -294,6 +313,8 @@ function App() {
 
   const secondaryMetric = mode === 'play' ? aiEvaluation : arenaSummary?.samples ?? 0
   const secondaryLabel = mode === 'play' ? 'Heuristic' : 'Samples'
+  const detailMetric = mode === 'play' ? `${formatReason(aiReason)} / d${aiCompletedDepth}` : formatWinner(arenaSummary?.latest_game?.winner ?? 0)
+  const detailLabel = mode === 'play' ? `${formatDifficulty(difficulty)} reason` : 'Latest result'
   const disabledBoard = mode === 'arena' || isThinking || gameOver
 
   return (
@@ -332,6 +353,10 @@ function App() {
           <div className="info-card">
             <span className="info-label">{secondaryLabel}</span>
             <strong>{secondaryMetric}</strong>
+          </div>
+          <div className="info-card">
+            <span className="info-label">{detailLabel}</span>
+            <strong>{detailMetric}</strong>
           </div>
         </div>
 
@@ -377,10 +402,28 @@ function App() {
             </div>
           </div>
         ) : (
-          <div className="action-row">
-            <button type="button" className="primary-button" onClick={handleReset}>
-              New game
-            </button>
+          <div className="play-controls">
+            <label className="field-label" htmlFor="difficulty">
+              Difficulty
+            </label>
+            <div className="action-row">
+              <select
+                id="difficulty"
+                className="select-input"
+                value={difficulty}
+                onChange={(event) => setDifficulty(event.target.value)}
+                disabled={isThinking}
+              >
+                {difficultyOptions.map((option) => (
+                  <option key={option} value={option}>
+                    {formatDifficulty(option)}
+                  </option>
+                ))}
+              </select>
+              <button type="button" className="primary-button" onClick={handleReset}>
+                New game
+              </button>
+            </div>
             <span className="hint-text">X is the player, O is the backend AI, board size is 15x15.</span>
           </div>
         )}

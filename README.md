@@ -1,15 +1,27 @@
 # Gomoku AI Project
 
-Ứng dụng cờ caro full-stack với:
+Dự án Gomoku/Caro 15x15 full-stack với frontend React, backend FastAPI và AI classical search.
 
-- Backend Python `FastAPI`
-- AI dùng `Minimax + Alpha-Beta Pruning`
-- Hàm đánh giá `heuristic` để lượng giá thế cờ
-- Frontend `React + Vite`
+Tên repo hiện là `Tictactoe`, nhưng game đang triển khai là Gomoku/Caro 15x15, không phải tic-tac-toe 3x3.
 
-Kiến trúc đã tách lớp để sau này có thể thay phần heuristic bằng mô hình deep learning.
+## Tính năng chính
 
-## Cấu trúc dự án
+- Chơi người - máy trên board 15x15.
+- AI dùng minimax/alpha-beta pruning.
+- Iterative deepening theo time limit.
+- Transposition table với Zobrist hash.
+- Threat detection: open-four, closed-four, open-three, broken-three, double-threat.
+- Difficulty: Easy, Medium, Hard.
+- Backend trả `reason` để giải thích nước đi của AI.
+- Arena mode cho AI tự đấu và sinh dữ liệu JSONL.
+
+## Công nghệ
+
+- Backend: Python, FastAPI, Pydantic, Uvicorn.
+- Frontend: React, Vite.
+- Arena: Python CLI và FastAPI service riêng.
+
+## Cấu trúc thư mục
 
 ```text
 .
@@ -17,102 +29,53 @@ Kiến trúc đã tách lớp để sau này có thể thay phần heuristic b�
 │   ├── ai_core.py
 │   ├── main.py
 │   ├── requirements.txt
-│   └── venv/
+│   └── start_backend.ps1
 ├── frontend/
-│   ├── public/
-│   │   └── index.html
 │   ├── src/
-│   │   ├── components/
-│   │   │   ├── Board.jsx
-│   │   │   └── Square.jsx
 │   │   ├── App.jsx
 │   │   ├── App.css
-│   │   └── main.jsx
+│   │   └── components/
+│   │       ├── Board.jsx
+│   │       └── Square.jsx
 │   ├── package.json
 │   └── vite.config.js
-├── .gitignore
+├── arena/
+│   ├── engine.py
+│   ├── service.py
+│   ├── run_arena.py
+│   ├── generate_data.py
+│   └── data/
+├── AGENTS.md
+├── PIPELINE.md
+├── IMPLEMENTATION_PLAN.md
 └── README.md
 ```
 
-## Thuật toán
+## Quy ước board
 
-### 1. Minimax với Alpha-Beta Pruning
+Board là ma trận 15x15.
 
-- AI giả lập các nước đi ứng viên.
-- Người chơi được coi là nút minimizing.
-- AI được coi là nút maximizing.
-- Alpha-beta pruning giúp cắt bớt nhánh không cần thiết.
-
-### 2. Heuristic đánh giá bàn cờ
-
-Hàm lượng giá tính điểm dựa trên các mẫu thế cờ:
-
-- 5 quân liên tiếp: thắng tuyệt đối
-- 4 mở hai đầu: ưu tiên rất cao
-- 4 mở một đầu
-- 3 mở hai đầu
-- 2 mở hai đầu
-
-Để giảm không gian tìm kiếm trên bàn 15x15, AI chỉ xét các ô trống nằm gần các quân đã có trên bàn.
-
-### 3. Hướng mở rộng với deep learning
-
-Thiết kế hiện tại cho phép:
-
-- Giữ `GomokuAI` là lớp điều phối tìm kiếm
-- Thay `evaluate_board()` bằng model inference
-- Hoặc kết hợp heuristic + neural evaluation
-
-## API backend
-
-### `GET /api/health`
-
-Kiểm tra server đang chạy.
-
-### `POST /api/get-move`
-
-Body:
-
-```json
-{
-  "board": [[0, 0, 0], "... ma trận 15x15 ..."],
-  "player": 1
-}
+```text
+0  = ô trống
+1  = AI / O
+-1 = người chơi / X
 ```
 
-Quy ước:
+Frontend hiển thị:
 
-- `0`: ô trống
-- `-1`: người chơi
-- `1`: AI
-
-Response:
-
-```json
-{
-  "row": 7,
-  "col": 7,
-  "evaluation": 120,
-  "message": "Move generated successfully."
-}
-```
+- `X`: người chơi.
+- `O`: AI.
 
 ## Chạy backend
 
-Cách ổn định nhất trên Windows là dùng script có sẵn:
+Cách khuyến nghị trên Windows:
 
 ```powershell
 cd backend
 .\start_backend.ps1
 ```
 
-Script sẽ:
-
-- tạo `venv` nếu chưa có
-- tự cài `fastapi`, `uvicorn`, `pydantic` nếu đang thiếu
-- chạy server bằng đúng Python trong `venv`
-
-Nếu bạn muốn chạy thủ công:
+Hoặc chạy thủ công:
 
 ```powershell
 cd backend
@@ -121,111 +84,184 @@ python -m venv venv
 .\venv\Scripts\python.exe -m uvicorn main:app --reload
 ```
 
-Server mặc định chạy tại `http://127.0.0.1:8000`.
+Backend mặc định:
+
+```text
+http://127.0.0.1:8000
+```
+
+Health check:
+
+```text
+GET http://127.0.0.1:8000/api/health
+```
 
 ## Chạy frontend
 
-```bash
+```powershell
 cd frontend
 npm install
-npm run dev
+npm.cmd run dev
 ```
 
-Frontend mặc định chạy tại `http://127.0.0.1:5173`.
+Frontend mặc định:
 
-Nếu backend không chạy ở cổng mặc định, tạo file `.env` trong `frontend/`:
-
-```bash
-VITE_API_BASE_URL=http://127.0.0.1:8000
+```text
+http://127.0.0.1:5173
 ```
 
-Khi chạy bằng Vite dev server, frontend mặc định sẽ proxy `/api` sang `http://127.0.0.1:8000`, nên thường không cần cấu hình thêm.
+Nếu PowerShell chặn `npm`, dùng `npm.cmd`.
 
-## Luồng hoạt động
+Build frontend:
 
-1. Người chơi đặt quân `X`.
-2. Frontend gửi bàn cờ hiện tại tới backend.
-3. Backend dùng minimax + heuristic để chọn nước đi tối ưu cho `O`.
-4. Frontend cập nhật bàn cờ và hiển thị kết quả.
+```powershell
+cd frontend
+npm.cmd run build
+```
 
-## Gợi ý phát triển tiếp
+## Chạy arena
 
-- Tăng độ sâu tìm kiếm động theo giai đoạn trận đấu
-- Thêm luật chặn đầu, cấm nước tùy biến
-- Ghi lịch sử nước đi và undo
-- Thêm chế độ AI vs AI
-- Thêm evaluator bằng deep learning
-
-## Arena mode cho self-play
-
-Arena mode được tách riêng khỏi `backend/` hiện tại. Phần mới nằm trong thư mục `arena/` và chỉ import lại `backend/ai_core.py`, không sửa file backend sẵn có.
-
-### Thành phần mới
-
-- `arena/service.py`: FastAPI service cho self-play
-- `arena/engine.py`: engine cho 2 AI tự đấu và ghi sample training
-- `arena/run_arena.py`: CLI để chạy batch self-play không cần UI
-- `arena/start_arena.ps1`: script chạy arena API ở cổng `8100`
-
-### Chạy arena API
+Arena API:
 
 ```powershell
 .\arena\start_arena.ps1
 ```
 
-Sau đó mở frontend và chuyển sang tab `Arena`.
-
-Frontend sẽ gọi:
-
-- `POST http://127.0.0.1:8100/arena/api/self-play`
-
-Nếu cần đổi host/port, tạo `frontend/.env`:
-
-```bash
-VITE_ARENA_API_BASE_URL=http://127.0.0.1:8100
-```
-
-### Chạy batch bằng CLI
-
-```powershell
-.\backend\venv\Scripts\python.exe -m arena.run_arena --games 100
-```
-
-Ví dụ:
-
-```powershell
-.\backend\venv\Scripts\python.exe -m arena.run_arena --games 500 --depth 2 --candidate-radius 2 --candidate-limit 14
-```
-
-Mặc định, dữ liệu sẽ được ghi vào:
+Arena mặc định:
 
 ```text
-arena/data/arena_<timestamp>.jsonl
+http://127.0.0.1:8100
 ```
 
-### Định dạng dữ liệu training
+Batch self-play:
 
-Mỗi dòng trong file `jsonl` là một trạng thái trước nước đi:
+```powershell
+.\backend\venv\Scripts\python.exe -m arena.run_arena --games 10
+```
+
+Ví dụ cấu hình nhẹ:
+
+```powershell
+.\backend\venv\Scripts\python.exe -m arena.run_arena --games 1 --depth 1 --candidate-radius 1 --candidate-limit 4 --max-moves 6 --no-save
+```
+
+## API người - máy
+
+Endpoint:
+
+```http
+POST /api/get-move
+```
+
+Request:
 
 ```json
 {
-  "game_id": "b8e1...",
-  "turn_index": 12,
+  "board": [[0, 0, 0]],
   "player": 1,
-  "board": [[0, 0], "..."],
-  "normalized_board": [[0, 0], "..."],
-  "move": { "row": 7, "col": 8 },
-  "evaluation": 350,
-  "winner": 1,
-  "outcome": 1
+  "difficulty": "medium"
 }
 ```
 
-Ý nghĩa:
+`difficulty` có thể là:
 
-- `board`: bàn cờ gốc tại thời điểm trước khi đánh
-- `normalized_board`: bàn cờ đã đổi perspective để người sắp đi luôn là `1`
-- `move`: nước đi được chọn
-- `evaluation`: heuristic hiện tại của AI tại trạng thái đó
-- `winner`: kết quả cuối cùng của ván (`1`, `-1`, hoặc `0`)
-- `outcome`: kết quả nhìn từ phía người đánh ở sample đó (`1` thắng, `0` hòa, `-1` thua)
+```text
+easy
+medium
+hard
+```
+
+Response:
+
+```json
+{
+  "row": 7,
+  "col": 8,
+  "evaluation": 120,
+  "reason": "creating_open_four",
+  "difficulty": "medium",
+  "completed_depth": 2,
+  "message": "Move generated successfully."
+}
+```
+
+## AI core
+
+File chính:
+
+```text
+backend/ai_core.py
+```
+
+Sau refactor, AI được tách thành nhiều module nhỏ:
+
+```text
+backend/ai_types.py       # Constants, SearchConfig, MoveAnalysis, ThreatSummary
+backend/board_rules.py    # Luật board cơ bản: bounds, winner, normalize, line potential
+backend/threats.py        # ThreatDetector: open-four, closed-four, open-three, broken-three
+backend/evaluator.py      # BoardEvaluator: chấm điểm board từ threat + pattern liên tục
+backend/move_ordering.py  # Candidate generation, move scoring, reason classification
+backend/ai_core.py        # GomokuAI: orchestration, minimax, alpha-beta, cache, time limit
+```
+
+`ai_core.py` vẫn là entry point public để `backend/main.py` và `arena/*` import không đổi.
+
+Luồng chọn nước:
+
+1. Validate player.
+2. Normalize board nếu cần.
+3. Nếu board trống, đánh trung tâm.
+4. Nếu AI thắng ngay, đánh nước thắng.
+5. Nếu người chơi thắng ngay, chặn.
+6. Sinh candidate moves.
+7. Sắp xếp candidate bằng local shape score và threat score.
+8. Chạy iterative deepening với alpha-beta pruning.
+9. Dùng evaluator để chấm leaf node.
+10. Trả `MoveAnalysis` gồm move, score, reason và completed depth.
+
+Các reason thường gặp:
+
+- `opening_center`
+- `winning_move`
+- `blocking_win`
+- `creating_open_four`
+- `blocking_open_four`
+- `building_attack`
+- `reducing_threat`
+- `best_search_score`
+- `timeout_best_known`
+
+## Kiểm tra nhanh
+
+Python compile:
+
+```powershell
+.\backend\venv\Scripts\python.exe -m py_compile backend\ai_types.py backend\board_rules.py backend\threats.py backend\evaluator.py backend\move_ordering.py backend\ai_core.py backend\main.py arena\engine.py arena\run_arena.py
+```
+
+Frontend build:
+
+```powershell
+cd frontend
+npm.cmd run build
+```
+
+Arena smoke test:
+
+```powershell
+.\backend\venv\Scripts\python.exe -m arena.run_arena --games 1 --depth 1 --candidate-radius 1 --candidate-limit 4 --max-moves 6 --no-save
+```
+
+## Tài liệu cho team
+
+- `AGENTS.md`: tổng quan cho người/agent mới vào dự án.
+- `PIPELINE.md`: quy trình phát triển, test, benchmark và review.
+- `IMPLEMENTATION_PLAN.md`: kế hoạch nâng cấp AI theo phase.
+
+## Lưu ý khi phát triển
+
+- Không commit cache `.pkl` nếu chỉ sinh ra do chạy test.
+- Không commit dataset mới trong `arena/data/` nếu task không yêu cầu.
+- Khi AI đánh sai, ưu tiên tạo tactical case tái hiện lỗi.
+- Không tăng depth trước khi kiểm tra evaluator/candidate pruning.
+- Sau khi sửa backend đang chạy, restart server để load AI instance mới.

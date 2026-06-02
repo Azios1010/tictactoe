@@ -76,6 +76,33 @@ function formatReason(value) {
   return value.replaceAll('_', ' ')
 }
 
+function formatMove(move) {
+  if (!move) {
+    return 'No AI move yet'
+  }
+  return `Row ${move.row + 1}, col ${move.col + 1}`
+}
+
+function formatElapsed(value) {
+  if (value == null) {
+    return 'Not measured'
+  }
+  return `${value} ms`
+}
+
+function formatBackendStatus(value) {
+  if (value === 'online') {
+    return 'Online'
+  }
+  if (value === 'thinking') {
+    return 'Calling AI'
+  }
+  if (value === 'offline') {
+    return 'Unreachable'
+  }
+  return 'Ready'
+}
+
 function App() {
   const [mode, setMode] = useState('play')
   const [board, setBoard] = useState(createEmptyBoard)
@@ -86,6 +113,9 @@ function App() {
   const [aiEvaluation, setAiEvaluation] = useState(0)
   const [aiReason, setAiReason] = useState('ready')
   const [aiCompletedDepth, setAiCompletedDepth] = useState(0)
+  const [aiElapsedMs, setAiElapsedMs] = useState(null)
+  const [aiLastMove, setAiLastMove] = useState(null)
+  const [backendStatus, setBackendStatus] = useState('idle')
   const [difficulty, setDifficulty] = useState('medium')
   const [arenaBatchSize, setArenaBatchSize] = useState(10)
   const [arenaSummary, setArenaSummary] = useState(null)
@@ -137,6 +167,9 @@ function App() {
     setAiEvaluation(0)
     setAiReason('ready')
     setAiCompletedDepth(0)
+    setAiElapsedMs(null)
+    setAiLastMove(null)
+    setBackendStatus('idle')
   }
 
   function resetArenaBoard(message = 'Arena ready. Run self-play to collect new samples.') {
@@ -148,6 +181,9 @@ function App() {
     setAiEvaluation(0)
     setAiReason('ready')
     setAiCompletedDepth(0)
+    setAiElapsedMs(null)
+    setAiLastMove(null)
+    setBackendStatus('idle')
     setArenaPlayback([])
   }
 
@@ -163,6 +199,9 @@ function App() {
   async function requestAiMove(nextBoard) {
     setIsThinking(true)
     setStatus('AI is thinking...')
+    setBackendStatus('thinking')
+    setAiElapsedMs(null)
+    const requestStartedAt = window.performance.now()
 
     try {
       const response = await fetch(`${API_BASE_URL}/api/get-move`, {
@@ -182,6 +221,8 @@ function App() {
       }
 
       const data = await response.json()
+      setAiElapsedMs(Math.round(window.performance.now() - requestStartedAt))
+      setBackendStatus('online')
       setAiEvaluation(data.evaluation)
       setAiReason(data.reason ?? 'best_search_score')
       setAiCompletedDepth(data.completed_depth ?? 0)
@@ -197,9 +238,11 @@ function App() {
         updatedBoard[data.row][data.col] = 1
         return updatedBoard
       })
+      setAiLastMove({ row: data.row, col: data.col })
       setLastMove({ row: data.row, col: data.col })
       setStatus(`AI played row ${data.row + 1}, col ${data.col + 1}. ${formatReason(data.reason ?? 'best_search_score')}.`)
     } catch (error) {
+      setBackendStatus('offline')
       if (error instanceof TypeError) {
         setStatus('Backend is unreachable. Start FastAPI on port 8000.')
       } else {
@@ -316,6 +359,7 @@ function App() {
   const detailMetric = mode === 'play' ? `${formatReason(aiReason)} / d${aiCompletedDepth}` : formatWinner(arenaSummary?.latest_game?.winner ?? 0)
   const detailLabel = mode === 'play' ? `${formatDifficulty(difficulty)} reason` : 'Latest result'
   const disabledBoard = mode === 'arena' || isThinking || gameOver
+  const apiTarget = API_BASE_URL || 'Vite proxy /api'
 
   return (
     <main className="app-shell">
@@ -425,6 +469,43 @@ function App() {
               </button>
             </div>
             <span className="hint-text">X is the player, O is the backend AI, board size is 15x15.</span>
+
+            <div className="analysis-panel" aria-label="AI analysis">
+              <div className="analysis-header">
+                <div>
+                  <span className="info-label">AI analysis</span>
+                  <strong>{formatDifficulty(difficulty)} search</strong>
+                </div>
+                <span className={`status-pill status-${backendStatus}`}>{formatBackendStatus(backendStatus)}</span>
+              </div>
+
+              <div className="analysis-grid">
+                <div className="analysis-item">
+                  <span>Reason</span>
+                  <strong>{formatReason(aiReason)}</strong>
+                </div>
+                <div className="analysis-item">
+                  <span>Completed depth</span>
+                  <strong>{aiCompletedDepth}</strong>
+                </div>
+                <div className="analysis-item">
+                  <span>Evaluation</span>
+                  <strong>{aiEvaluation}</strong>
+                </div>
+                <div className="analysis-item">
+                  <span>AI latency</span>
+                  <strong>{formatElapsed(aiElapsedMs)}</strong>
+                </div>
+                <div className="analysis-item analysis-wide">
+                  <span>Last AI move</span>
+                  <strong>{formatMove(aiLastMove)}</strong>
+                </div>
+                <div className="analysis-item analysis-wide">
+                  <span>Backend target</span>
+                  <strong className="path-text">{apiTarget}</strong>
+                </div>
+              </div>
+            </div>
           </div>
         )}
       </section>

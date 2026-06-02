@@ -1,0 +1,4 @@
+interface:
+  display_name: "Gomoku AI Core"
+  short_description: "Work on the Gomoku classical AI engine."
+  default_prompt: "Improve or debug the Gomoku AI core using the project conventions."

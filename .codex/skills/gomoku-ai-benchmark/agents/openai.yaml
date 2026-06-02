@@ -1,0 +1,4 @@
+interface:
+  display_name: "Gomoku AI Benchmark"
+  short_description: "Create and run Gomoku AI benchmark workflows."
+  default_prompt: "Build or run benchmarks for the Gomoku AI and summarize results for the report."

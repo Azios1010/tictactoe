@@ -176,6 +176,24 @@ class GomokuAI:
             )
 
         deadline = self._search_deadline()
+        try:
+            forcing_move = self._find_forcing_win(
+                board=board,
+                attacker=AI_STONE,
+                defender=HUMAN_STONE,
+                depth=2,
+                deadline=deadline,
+            )
+        except SearchTimeout:
+            forcing_move = None
+        if forcing_move is not None:
+            return MoveAnalysis(
+                move=forcing_move,
+                score=500_000,
+                reason=self._classify_move_reason(board, forcing_move),
+                completed_depth=0,
+            )
+
         best_move: tuple[int, int] | None = candidates[0]
         best_score = float(self._score_move(board, best_move[0], best_move[1]))
         ordered_candidates = candidates
@@ -436,6 +454,43 @@ class GomokuAI:
             board[row][col] = EMPTY
             if has_winner_for_player:
                 return (row, col)
+        return None
+
+    def _find_forcing_win(
+        self,
+        board: list[list[int]],
+        attacker: int,
+        defender: int,
+        depth: int,
+        deadline: float | None,
+    ) -> tuple[int, int] | None:
+        if depth <= 0:
+            return None
+
+        candidates = self._generate_candidates(board)
+        for row, col in candidates:
+            self._check_deadline(deadline)
+            if board[row][col] != EMPTY:
+                continue
+            if not self.move_ordering.generates_forcing_threat(board, row, col, attacker):
+                continue
+            board[row][col] = attacker
+            try:
+                if self._has_winner(board, attacker):
+                    return (row, col)
+                defender_block = self._find_winning_move(board, attacker)
+                if defender_block is None:
+                    return (row, col)
+                block_row, block_col = defender_block
+                board[block_row][block_col] = defender
+                try:
+                    reply = self._find_forcing_win(board, attacker, defender, depth - 1, deadline)
+                    if reply is not None:
+                        return (row, col)
+                finally:
+                    board[block_row][block_col] = EMPTY
+            finally:
+                board[row][col] = EMPTY
         return None
 
     def _generate_candidates(self, board: list[list[int]]) -> list[tuple[int, int]]:

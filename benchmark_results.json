@@ -1,0 +1,194 @@
+[
+  {
+    "case": "opening",
+    "agent": "center_first_baseline",
+    "move": [
+      7,
+      7
+    ],
+    "score": 0,
+    "reason": "center_or_nearest_empty",
+    "completed_depth": 0,
+    "elapsed_ms": 0.0
+  },
+  {
+    "case": "opening",
+    "agent": "project_easy",
+    "move": [
+      7,
+      7
+    ],
+    "score": 0,
+    "reason": "opening_center",
+    "completed_depth": 0,
+    "elapsed_ms": 0.12
+  },
+  {
+    "case": "opening",
+    "agent": "project_medium",
+    "move": [
+      7,
+      7
+    ],
+    "score": 0,
+    "reason": "opening_center",
+    "completed_depth": 0,
+    "elapsed_ms": 0.07
+  },
+  {
+    "case": "opening",
+    "agent": "project_hard",
+    "move": [
+      7,
+      7
+    ],
+    "score": 0,
+    "reason": "opening_center",
+    "completed_depth": 0,
+    "elapsed_ms": 0.07
+  },
+  {
+    "case": "midgame",
+    "agent": "center_first_baseline",
+    "move": [
+      6,
+      6
+    ],
+    "score": 0,
+    "reason": "center_or_nearest_empty",
+    "completed_depth": 0,
+    "elapsed_ms": 0.01
+  },
+  {
+    "case": "midgame",
+    "agent": "project_easy",
+    "move": [
+      6,
+      10
+    ],
+    "score": -8930.0,
+    "reason": "creating_double_threat",
+    "completed_depth": 2,
+    "elapsed_ms": 171.22
+  },
+  {
+    "case": "midgame",
+    "agent": "project_medium",
+    "move": [
+      6,
+      6
+    ],
+    "score": 103480.0,
+    "reason": "building_attack",
+    "completed_depth": 2,
+    "elapsed_ms": 1222.49
+  },
+  {
+    "case": "midgame",
+    "agent": "project_hard",
+    "move": [
+      6,
+      6
+    ],
+    "score": 103480.0,
+    "reason": "building_attack",
+    "completed_depth": 2,
+    "elapsed_ms": 2215.72
+  },
+  {
+    "case": "block_open_four",
+    "agent": "center_first_baseline",
+    "move": [
+      6,
+      7
+    ],
+    "score": 0,
+    "reason": "center_or_nearest_empty",
+    "completed_depth": 0,
+    "elapsed_ms": 0.02
+  },
+  {
+    "case": "block_open_four",
+    "agent": "project_easy",
+    "move": [
+      7,
+      9
+    ],
+    "score": 9830013.0,
+    "reason": "blocking_win",
+    "completed_depth": 0,
+    "elapsed_ms": 22.48
+  },
+  {
+    "case": "block_open_four",
+    "agent": "project_medium",
+    "move": [
+      7,
+      9
+    ],
+    "score": 9830013.0,
+    "reason": "blocking_win",
+    "completed_depth": 0,
+    "elapsed_ms": 20.12
+  },
+  {
+    "case": "block_open_four",
+    "agent": "project_hard",
+    "move": [
+      7,
+      9
+    ],
+    "score": 9830013.0,
+    "reason": "blocking_win",
+    "completed_depth": 0,
+    "elapsed_ms": 15.92
+  },
+  {
+    "case": "forcing_open_four",
+    "agent": "center_first_baseline",
+    "move": [
+      7,
+      7
+    ],
+    "score": 0,
+    "reason": "center_or_nearest_empty",
+    "completed_depth": 0,
+    "elapsed_ms": 0.01
+  },
+  {
+    "case": "forcing_open_four",
+    "agent": "project_easy",
+    "move": [
+      6,
+      4
+    ],
+    "score": 500000,
+    "reason": "creating_open_four",
+    "completed_depth": 0,
+    "elapsed_ms": 45.94
+  },
+  {
+    "case": "forcing_open_four",
+    "agent": "project_medium",
+    "move": [
+      6,
+      4
+    ],
+    "score": 500000,
+    "reason": "creating_open_four",
+    "completed_depth": 0,
+    "elapsed_ms": 49.8
+  },
+  {
+    "case": "forcing_open_four",
+    "agent": "project_hard",
+    "move": [
+      6,
+      4
+    ],
+    "score": 500000,
+    "reason": "creating_open_four",
+    "completed_depth": 0,
+    "elapsed_ms": 52.16
+  }
+]

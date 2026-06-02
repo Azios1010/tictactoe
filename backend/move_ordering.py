@@ -97,11 +97,11 @@ class MoveOrdering:
 
     def score_move_threats(self, summary: ThreatSummary) -> int:
         return (
-            summary.open_four * 800_000
-            + summary.closed_four * 120_000
-            + summary.open_three * 25_000
-            + summary.broken_three * 8_000
-            + summary.double_threat * 250_000
+            summary.open_four * 900_000
+            + summary.closed_four * 180_000
+            + summary.open_three * 30_000
+            + summary.broken_three * 10_000
+            + summary.double_threat * 300_000
         )
 
     def classify_move_reason(self, board: list[list[int]], move: tuple[int, int] | None) -> str:
@@ -153,6 +153,16 @@ class MoveOrdering:
     def generate_forcing_candidates(self, board: list[list[int]]) -> list[tuple[int, int]]:
         candidates = self.generate_candidates(board)
         return [move for move in candidates if self.is_forcing_candidate(board, move[0], move[1])]
+
+    def generates_forcing_threat(self, board: list[list[int]], row: int, col: int, player: int) -> bool:
+        board[row][col] = player
+        try:
+            if has_winner(board, player, self.board_size):
+                return True
+            summary = self.threat_detector.move_summary(board, row, col, player)
+            return bool(summary.open_four or summary.closed_four)
+        finally:
+            board[row][col] = EMPTY
 
     def is_forcing_candidate(self, board: list[list[int]], row: int, col: int) -> bool:
         for player in (AI_STONE, HUMAN_STONE):

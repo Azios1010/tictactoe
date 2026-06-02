@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 from fastapi import FastAPI
@@ -7,6 +8,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 from arena.engine import ArenaConfig, generate_self_play_games, persist_dataset
+
+
+def get_cors_origins() -> list[str]:
+    raw_origins = os.getenv("FRONTEND_ORIGINS", "*").strip()
+    if not raw_origins or raw_origins == "*":
+        return ["*"]
+    return [origin.strip().rstrip("/") for origin in raw_origins.split(",") if origin.strip()]
 
 
 class ArenaRequest(BaseModel):
@@ -29,14 +37,25 @@ class ArenaResponse(BaseModel):
     config: dict
 
 
+CORS_ORIGINS = get_cors_origins()
 app = FastAPI(title="Gomoku Arena API", version="1.0.0")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
+    allow_origins=CORS_ORIGINS,
+    allow_credentials="*" not in CORS_ORIGINS,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.get("/")
+def root() -> dict[str, str]:
+    return {
+        "service": "Gomoku Arena API",
+        "health": "/arena/api/health",
+        "self_play": "/arena/api/self-play",
+        "docs": "/docs",
+    }
 
 
 @app.get("/arena/api/health")

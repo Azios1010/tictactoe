@@ -1,0 +1,4 @@
+interface:
+  display_name: "Gomoku AI Report"
+  short_description: "Write AI-focused Gomoku report sections."
+  default_prompt: "Draft AI report content from the Gomoku project evidence and benchmark results."

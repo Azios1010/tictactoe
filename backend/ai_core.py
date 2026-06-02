@@ -55,7 +55,7 @@ class GomokuAI:
             zobrist_table, side_to_move = self._init_zobrist()
             self.__class__._zobrist_table = zobrist_table
             self.__class__._zobrist_side_to_move = side_to_move
-        self.transposition_table: dict[int, tuple[int, float, str]] = {}
+        self.transposition_table: dict[int, tuple[int, float, str, tuple[int, int] | None]] = {}
         self.load_memory(self.memory_filename)
         atexit.register(self.save_memory, self.memory_filename)
 
@@ -108,10 +108,16 @@ class GomokuAI:
 
         if payload.get("version") == self.MEMORY_VERSION and isinstance(payload.get("entries"), dict):
             entries = payload["entries"]
-            self.transposition_table = {
-                int(board_hash): (int(depth), float(score), str(flag))
-                for board_hash, (depth, score, flag) in entries.items()
-            }
+            normalized_entries: dict[int, tuple[int, float, str, tuple[int, int] | None]] = {}
+            for board_hash, entry in entries.items():
+                if not isinstance(entry, (tuple, list)) or len(entry) not in {3, 4}:
+                    continue
+                depth, score, flag = entry[:3]
+                best_move = entry[3] if len(entry) == 4 else None
+                if best_move is not None:
+                    best_move = (int(best_move[0]), int(best_move[1]))
+                normalized_entries[int(board_hash)] = (int(depth), float(score), str(flag), best_move)
+            self.transposition_table = normalized_entries
 
     def save_memory(self, filename: str | Path | None = None) -> None:
         path = Path(filename or self.memory_filename)
@@ -169,7 +175,43 @@ class GomokuAI:
                 completed_depth=0,
             )
 
+        blocking_double_threat = self._find_double_open_three_move(board, HUMAN_STONE, candidates)
+        if blocking_double_threat is not None:
+            return MoveAnalysis(
+                move=blocking_double_threat,
+                score=float(self._score_move(board, blocking_double_threat[0], blocking_double_threat[1])),
+                reason="blocking_double_threat",
+                completed_depth=0,
+            )
+
+        creating_double_threat = self._find_double_open_three_move(board, AI_STONE, candidates)
+        if creating_double_threat is not None:
+            return MoveAnalysis(
+                move=creating_double_threat,
+                score=float(self._score_move(board, creating_double_threat[0], creating_double_threat[1])),
+                reason="creating_double_threat",
+                completed_depth=0,
+            )
+
         deadline = self._search_deadline()
+        try:
+            forcing_move = self._find_forcing_win(
+                board=board,
+                attacker=AI_STONE,
+                defender=HUMAN_STONE,
+                depth=2,
+                deadline=deadline,
+            )
+        except SearchTimeout:
+            forcing_move = None
+        if forcing_move is not None:
+            return MoveAnalysis(
+                move=forcing_move,
+                score=500_000,
+                reason=self._classify_move_reason(board, forcing_move),
+                completed_depth=0,
+            )
+
         best_move: tuple[int, int] | None = candidates[0]
         best_score = float(self._score_move(board, best_move[0], best_move[1]))
         ordered_candidates = candidates
@@ -245,7 +287,7 @@ class GomokuAI:
         cache_enabled = depth > 0 or extension_depth >= self.config.threat_extension_depth
         cached = self.transposition_table.get(search_hash) if cache_enabled else None
         if cached is not None:
-            cached_depth, cached_score, cached_flag = cached
+            cached_depth, cached_score, cached_flag, _cached_best_move = cached
             if cached_depth >= depth:
                 if cached_flag == self.EXACT:
                     return cached_score
@@ -259,12 +301,12 @@ class GomokuAI:
         if self._has_winner(board, AI_STONE):
             value = 2_000_000 + depth
             if cache_enabled:
-                self.transposition_table[search_hash] = (depth, value, self.EXACT)
+                self.transposition_table[search_hash] = (depth, value, self.EXACT, None)
             return value
         if self._has_winner(board, HUMAN_STONE):
             value = -2_000_000 - depth
             if cache_enabled:
-                self.transposition_table[search_hash] = (depth, value, self.EXACT)
+                self.transposition_table[search_hash] = (depth, value, self.EXACT, None)
             return value
         if depth <= 0 or self._is_full(board):
             if depth <= 0 and extension_depth < self.config.threat_extension_depth:
@@ -281,28 +323,41 @@ class GomokuAI:
                     )
             value = float(self.evaluate_board(board))
             if cache_enabled:
-                self.transposition_table[search_hash] = (depth, value, self.EXACT)
+                self.transposition_table[search_hash] = (depth, value, self.EXACT, None)
             return value
 
         candidates = self._generate_candidates(board)
         if not candidates:
             value = float(self.evaluate_board(board))
             if cache_enabled:
-                self.transposition_table[search_hash] = (depth, value, self.EXACT)
+                self.transposition_table[search_hash] = (depth, value, self.EXACT, None)
             return value
 
+        cached_best_move = cached[3] if cached is not None else None
+        if cached_best_move in candidates:
+            candidates = self._prioritize_move(candidates, cached_best_move)
+
+        best_move: tuple[int, int] | None = None
         if maximizing:
             value = -inf
             for row, col in candidates:
                 self._check_deadline(deadline)
                 board[row][col] = AI_STONE
                 try:
-                    value = max(
-                        value,
-                        self._minimax(board, depth - 1, alpha, beta, False, deadline, extension_depth),
+                    child_score = self._minimax(
+                        board,
+                        depth - 1,
+                        alpha,
+                        beta,
+                        False,
+                        deadline,
+                        extension_depth,
                     )
                 finally:
                     board[row][col] = EMPTY
+                if child_score > value:
+                    value = child_score
+                    best_move = (row, col)
                 alpha = max(alpha, value)
                 if beta <= alpha:
                     break
@@ -312,12 +367,20 @@ class GomokuAI:
                 self._check_deadline(deadline)
                 board[row][col] = HUMAN_STONE
                 try:
-                    value = min(
-                        value,
-                        self._minimax(board, depth - 1, alpha, beta, True, deadline, extension_depth),
+                    child_score = self._minimax(
+                        board,
+                        depth - 1,
+                        alpha,
+                        beta,
+                        True,
+                        deadline,
+                        extension_depth,
                     )
                 finally:
                     board[row][col] = EMPTY
+                if child_score < value:
+                    value = child_score
+                    best_move = (row, col)
                 beta = min(beta, value)
                 if beta <= alpha:
                     break
@@ -329,7 +392,7 @@ class GomokuAI:
             flag = self.LOWERBOUND
 
         if cache_enabled:
-            self.transposition_table[search_hash] = (depth, value, flag)
+            self.transposition_table[search_hash] = (depth, value, flag, best_move)
         return value
 
     def _search_extension(
@@ -409,6 +472,62 @@ class GomokuAI:
             board[row][col] = EMPTY
             if has_winner_for_player:
                 return (row, col)
+        return None
+
+    def _find_double_open_three_move(
+        self,
+        board: list[list[int]],
+        player: int,
+        candidates: Iterable[tuple[int, int]] | None = None,
+    ) -> tuple[int, int] | None:
+        search_space = candidates if candidates is not None else self._empty_cells(board)
+        for row, col in search_space:
+            if board[row][col] != EMPTY:
+                continue
+            board[row][col] = player
+            try:
+                summary = self._move_threat_summary(board, row, col, player)
+                if summary.open_three >= 2:
+                    return (row, col)
+            finally:
+                board[row][col] = EMPTY
+        return None
+
+    def _find_forcing_win(
+        self,
+        board: list[list[int]],
+        attacker: int,
+        defender: int,
+        depth: int,
+        deadline: float | None,
+    ) -> tuple[int, int] | None:
+        if depth <= 0:
+            return None
+
+        candidates = self._generate_candidates(board)
+        for row, col in candidates:
+            self._check_deadline(deadline)
+            if board[row][col] != EMPTY:
+                continue
+            if not self.move_ordering.generates_forcing_threat(board, row, col, attacker):
+                continue
+            board[row][col] = attacker
+            try:
+                if self._has_winner(board, attacker):
+                    return (row, col)
+                defender_block = self._find_winning_move(board, attacker)
+                if defender_block is None:
+                    return (row, col)
+                block_row, block_col = defender_block
+                board[block_row][block_col] = defender
+                try:
+                    reply = self._find_forcing_win(board, attacker, defender, depth - 1, deadline)
+                    if reply is not None:
+                        return (row, col)
+                finally:
+                    board[block_row][block_col] = EMPTY
+            finally:
+                board[row][col] = EMPTY
         return None
 
     def _generate_candidates(self, board: list[list[int]]) -> list[tuple[int, int]]:

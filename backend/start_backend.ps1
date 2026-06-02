@@ -4,6 +4,22 @@ $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $venvDir = Join-Path $scriptDir 'venv'
 $pythonExe = Join-Path $venvDir 'Scripts\python.exe'
 $requirementsFile = Join-Path $scriptDir 'requirements.txt'
+$envFile = Join-Path $scriptDir '.env'
+
+if (Test-Path $envFile) {
+    Get-Content $envFile | ForEach-Object {
+        $line = $_.Trim()
+        if (-not $line -or $line.StartsWith('#') -or -not $line.Contains('=')) {
+            return
+        }
+        $parts = $line.Split('=', 2)
+        $name = $parts[0].Trim()
+        $value = $parts[1].Trim().Trim('"').Trim("'")
+        if ($name) {
+            [Environment]::SetEnvironmentVariable($name, $value, 'Process')
+        }
+    }
+}
 
 if (-not (Test-Path $pythonExe)) {
     Write-Host 'Creating virtual environment...'

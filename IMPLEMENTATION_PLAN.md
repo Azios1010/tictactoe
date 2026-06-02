@@ -1,355 +1,717 @@
-# Implementation Plan: Người - Máy Gomoku AI
+# Gomoku AI Improvement Implementation Plan
 
-Mục tiêu: nâng cấp chế độ người - máy để bot đánh thông minh hơn nhưng vẫn kiểm soát được thời gian phản hồi. Không dùng reinforcement learning hoặc model training; hướng triển khai là classical game engine: search tốt hơn, cache đúng hơn, heuristic/threat evaluator mạnh hơn.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-## Nguyên tắc triển khai
+**Goal:** Nâng cấp và đánh giá AI Gomoku 15x15 theo hướng classical game AI, tập trung vào benchmark, tactical correctness, threat-aware evaluation và search optimization.
 
-- Ưu tiên sửa tính đúng trước khi tăng độ sâu search.
-- Mỗi lượt người chơi xong, backend phải search lại từ board mới.
-- Bot phải có time limit để không làm UI/API bị treo.
-- Các nước chiến thuật bắt buộc như thắng ngay hoặc chặn thắng ngay không được bị loại bởi `candidate_limit`.
-- Thay đổi nên giữ `GomokuAI` là core engine dùng chung cho backend và arena.
+**Architecture:** AI vẫn đi theo hướng không dùng reinforcement learning hoặc model training. Core engine nằm trong `backend/`, gồm search orchestration, board rules, threat detection, evaluator và move ordering. Các cải tiến phải giữ `GomokuAI` là public entry point để `backend/main.py` và `arena/engine.py` tiếp tục dùng chung.
 
-## Module AI hiện tại
+**Tech Stack:** Python 3, FastAPI, React/Vite, classical minimax/alpha-beta, iterative deepening, Zobrist hashing, transposition table, JSONL benchmark data.
 
-AI core đã được tách khỏi một file lớn thành các module:
+---
 
-- `backend/ai_types.py`: constants, config, dataclass kết quả.
-- `backend/board_rules.py`: luật board cơ bản.
-- `backend/threats.py`: threat detector.
-- `backend/evaluator.py`: heuristic evaluator.
-- `backend/move_ordering.py`: candidate generation và move ordering.
-- `backend/ai_core.py`: search orchestration, minimax, alpha-beta, transposition table.
+## Trọng Tâm Đóng Góp AI
 
-Khi triển khai các phase mới, ưu tiên sửa đúng module thay vì nhồi thêm logic vào `ai_core.py`.
+Dự án cần được trình bày như một hệ thống AI Gomoku classical-search, không phải một sản phẩm web là chính. Các đóng góp chính nên nhấn mạnh:
 
-## Phase 1: Sửa nền tảng core AI
+1. **Candidate move generation**: giảm branching factor bằng cách chỉ xét các ô gần quân đã đánh, đồng thời không loại bỏ tactical moves quan trọng.
+2. **Move ordering**: ưu tiên thắng ngay, chặn thắng, tạo/chặn four, tạo/chặn three và double threat để alpha-beta pruning cắt nhánh hiệu quả hơn.
+3. **Threat detection**: nhận diện five, open four, closed four, open three, broken three và double threat.
+4. **Pattern-based evaluation**: chấm điểm bàn cờ theo công thức `AttackScore - DefenseScore`, kết hợp threat score và contiguous pattern score.
+5. **Immediate win/block**: kiểm tra nước thắng hoặc chặn thắng một lượt trước khi search sâu.
+6. **Iterative deepening with time limit**: trả nước đi ổn định trong giới hạn thời gian.
+7. **Zobrist hash + transposition table**: cache trạng thái search, có phân biệt side-to-move.
+8. **Threat extension / quiescence giới hạn**: tiếp tục search một số forcing moves khi leaf node còn threat nguy hiểm.
 
-### 1. Sửa độ đúng của core AI
+## Phạm Vi Hiện Tại
 
-**Mục tiêu**
+### Đã có trong code
 
-Đảm bảo AI search đúng perspective, không dùng nhầm cache giữa các lượt hoặc giữa các người chơi.
+- `backend/ai_types.py`: constants, `SearchConfig`, `MoveAnalysis`, `ThreatSummary`.
+- `backend/board_rules.py`: winner check, bounds, normalize board, line potential.
+- `backend/threats.py`: threat detector theo line pattern.
+- `backend/evaluator.py`: board evaluator kết hợp threat score và contiguous pattern score.
+- `backend/move_ordering.py`: candidate generation, scoring, tactical candidate, reason classification.
+- `backend/ai_core.py`: minimax, alpha-beta, iterative deepening, transposition table, Zobrist hash, immediate win/block, threat extension.
+- `arena/engine.py`: self-play và xuất sample JSONL.
 
-**Việc cần làm**
+### Chưa nên claim là đã hoàn thiện
 
-- Thêm side-to-move vào transposition table key.
-- Làm rõ contract của `get_best_move()`:
-  - hoặc chỉ hỗ trợ `player=AI_STONE`;
-  - hoặc chuyển sang perspective-based search/negamax để hỗ trợ cả `1` và `-1`.
-- Validate API không nhận mode mà core chưa hỗ trợ đúng.
-- Kiểm tra lại arena vì arena đang dùng `normalize_board()`.
+- Principal Variation Search.
+- Killer Move Heuristic.
+- History Heuristic.
+- Aspiration Window.
+- Parallel Search.
+- Threat Space Search / VCF solver đầy đủ.
+- Benchmark chuẩn hóa với engine ngoài như Rapfi hoặc Yixin.
 
-**File chính**
+---
 
-- `backend/ai_core.py`
-- `backend/main.py`
-- `arena/engine.py`
+## Task 1: Tạo Tactical Benchmark Suite
 
-**Done khi**
+**Mục tiêu:** Có bộ test/benchmark chiến thuật để chứng minh AI xử lý đúng các tình huống Gomoku quan trọng.
 
-- Cùng một board nhưng khác lượt đi không dùng chung cache sai.
-- API người - máy vẫn trả nước hợp lệ.
-- Arena self-play không bị vỡ do thay đổi perspective.
+**Files:**
+- Create: `tests/fixtures/tactical_cases.jsonl`
+- Create: `tests/test_tactical_cases.py`
 
-### 2. Chống nước thắng ngay
+- [ ] **Step 1: Tạo thư mục test**
 
-**Mục tiêu**
+Run:
 
-Bot không bỏ lỡ nước thắng trong 1 ply và không quên chặn người chơi thắng ngay.
+```powershell
+New-Item -ItemType Directory -Force tests
+New-Item -ItemType Directory -Force tests\fixtures
+```
 
-**Việc cần làm**
+Expected: thư mục `tests/` và `tests/fixtures/` tồn tại.
 
-- Thêm helper tìm nước thắng tức thì cho một player.
-- Trong `get_best_move()`:
-  - nếu AI có nước thắng ngay, đánh ngay;
-  - nếu người chơi có nước thắng ngay, chặn ngay;
-  - sau đó mới vào search thường.
+- [ ] **Step 2: Thêm fixture tactical cases**
 
-**File chính**
+Create `tests/fixtures/tactical_cases.jsonl` with:
 
-- `backend/ai_core.py`
+```jsonl
+{"name":"opening_center","player":1,"board":["...............","...............","...............","...............","...............","...............","...............","...............","...............","...............","...............","...............","...............","...............","..............."],"expected_moves":[[7,7]],"tags":["opening"]}
+{"name":"ai_win_horizontal","player":1,"board":["...............","...............","...............","...............","...............","...............","...............",".....OOOO......","...............","...............","...............","...............","...............","...............","..............."],"expected_moves":[[7,4],[7,9]],"tags":["win","five"]}
+{"name":"block_human_open_four_horizontal","player":1,"board":["...............","...............","...............","...............","...............","...............","...............",".....XXXX......","...............","...............","...............","...............","...............","...............","..............."],"expected_moves":[[7,4],[7,9]],"tags":["block","open_four"]}
+{"name":"block_human_broken_four_xx_xx","player":1,"board":["...............","...............","...............","...............","...............","...............","...............",".....XX.XX.....","...............","...............","...............","...............","...............","...............","..............."],"expected_moves":[[7,7]],"tags":["block","broken_four"]}
+{"name":"ai_win_diagonal","player":1,"board":["...............","...............","...............","...............","....O..........",".....O.........","......O........",".......O.......","...............","...............","...............","...............","...............","...............","..............."],"expected_moves":[[3,3],[8,8]],"tags":["win","diagonal"]}
+{"name":"block_human_vertical","player":1,"board":["...............","...............","...............",".......X.......",".......X.......",".......X.......",".......X.......","...............","...............","...............","...............","...............","...............","...............","..............."],"expected_moves":[[2,7],[7,7]],"tags":["block","vertical"]}
+```
 
-**Done khi**
+- [ ] **Step 3: Viết parser và tactical test**
 
-- Test board AI có 4 quân liên tiếp, bot chọn nước thứ 5.
-- Test board người chơi có 4 quân liên tiếp, bot chọn nước chặn.
+Create `tests/test_tactical_cases.py` with:
 
-## Phase 2: Tăng hiệu quả search
+```python
+from __future__ import annotations
 
-### 3. Nâng move ordering
+import json
+import sys
+from pathlib import Path
 
-**Mục tiêu**
+ROOT_DIR = Path(__file__).resolve().parent.parent
+BACKEND_DIR = ROOT_DIR / "backend"
+if str(BACKEND_DIR) not in sys.path:
+    sys.path.insert(0, str(BACKEND_DIR))
 
-Giúp alpha-beta pruning cắt nhiều nhánh hơn bằng cách xét nước mạnh trước.
+from ai_core import AI_STONE, EMPTY, HUMAN_STONE, GomokuAI, SearchConfig
 
-**Việc cần làm**
 
-- Tách scoring nước đi thành tactical score rõ ràng.
-- Ưu tiên:
-  - thắng ngay;
-  - chặn thắng ngay;
-  - tạo open four;
-  - chặn open four;
-  - tạo/chặn open three;
-  - gần trung tâm;
-  - heuristic score hiện tại.
-- Lưu best move từ transposition table để đưa lên đầu danh sách ở lần search sau.
+FIXTURE_PATH = ROOT_DIR / "tests" / "fixtures" / "tactical_cases.jsonl"
+SYMBOLS = {
+    ".": EMPTY,
+    "O": AI_STONE,
+    "X": HUMAN_STONE,
+}
 
-**File chính**
 
-- `backend/ai_core.py`
+def parse_board(rows: list[str]) -> list[list[int]]:
+    assert len(rows) == 15
+    board: list[list[int]] = []
+    for row in rows:
+        assert len(row) == 15
+        board.append([SYMBOLS[cell] for cell in row])
+    return board
 
-**Done khi**
 
-- Candidate list luôn đưa tactical moves lên đầu.
-- Search cùng depth nhanh hơn hoặc ít nhất không chậm đáng kể.
+def load_cases() -> list[dict]:
+    return [json.loads(line) for line in FIXTURE_PATH.read_text(encoding="utf-8").splitlines() if line.strip()]
 
-### 4. Iterative deepening + time limit
 
-**Mục tiêu**
+def test_tactical_cases_choose_expected_moves() -> None:
+    ai = GomokuAI(
+        config=SearchConfig(depth=3, candidate_radius=2, candidate_limit=12, time_limit_ms=1500, threat_extension_depth=1),
+        memory_filename=ROOT_DIR / "tests" / "gomoku_tt_test.pkl",
+    )
 
-Bot luôn trả nước trong thời gian cấu hình, đồng thời tận dụng thời gian còn lại để search sâu hơn.
+    failures: list[str] = []
+    for case in load_cases():
+        board = parse_board(case["board"])
+        analysis = ai.get_move_analysis(board, case["player"])
+        expected_moves = {tuple(move) for move in case["expected_moves"]}
+        if analysis.move not in expected_moves:
+            failures.append(f"{case['name']}: got {analysis.move}, expected one of {sorted(expected_moves)}, reason={analysis.reason}")
 
-**Việc cần làm**
+    assert not failures, "\n".join(failures)
+```
 
-- Thêm config:
-  - `time_limit_ms`;
-  - `max_depth`;
-  - `difficulty`.
-- Search depth 1, 2, 3... cho đến hết giờ.
-- Nếu timeout trong depth hiện tại, trả best move hoàn chỉnh từ depth trước.
-- Không để timeout làm board bị mutate dở.
+- [ ] **Step 4: Chạy test để kiểm tra baseline hiện tại**
 
-**File chính**
+Run:
 
-- `backend/ai_core.py`
-- `backend/main.py`
-- `frontend/src/App.jsx`
+```powershell
+.\backend\venv\Scripts\python.exe -m pytest tests\test_tactical_cases.py -v
+```
+
+Expected: PASS nếu đã xử lý đúng các tactical case cơ bản. Nếu chưa cài `pytest`, dùng script benchmark ở Task 2 trước hoặc cài `pytest` trong môi trường dev.
+
+- [ ] **Step 5: Dọn cache test nếu phát sinh**
+
+Run:
 
-**Done khi**
+```powershell
+Remove-Item -LiteralPath tests\gomoku_tt_test.pkl -ErrorAction SilentlyContinue
+```
+
+Expected: không còn `tests/gomoku_tt_test.pkl`.
+
+---
+
+## Task 2: Tạo Benchmark Script Cho Báo Cáo
+
+**Mục tiêu:** Có số liệu thực nghiệm để so sánh Easy/Medium/Hard và baseline đơn giản.
+
+**Files:**
+- Create: `benchmark_ai.py`
+- Output: `benchmark_results.json`
+
+- [ ] **Step 1: Tạo script benchmark**
+
+Create `benchmark_ai.py` with:
+
+```python
+from __future__ import annotations
+
+import json
+import sys
+import time
+from pathlib import Path
+
+ROOT_DIR = Path(__file__).resolve().parent
+BACKEND_DIR = ROOT_DIR / "backend"
+if str(BACKEND_DIR) not in sys.path:
+    sys.path.insert(0, str(BACKEND_DIR))
+
+from ai_core import AI_STONE, BOARD_SIZE, EMPTY, HUMAN_STONE, GomokuAI, SearchConfig
+from main import DIFFICULTY_CONFIGS, get_ai
+
+
+def empty_board() -> list[list[int]]:
+    return [[EMPTY for _ in range(BOARD_SIZE)] for _ in range(BOARD_SIZE)]
+
+
+def create_midgame_board() -> list[list[int]]:
+    board = empty_board()
+    placements = [
+        (7, 7, HUMAN_STONE),
+        (7, 8, AI_STONE),
+        (8, 7, HUMAN_STONE),
+        (6, 8, AI_STONE),
+        (8, 8, HUMAN_STONE),
+        (6, 7, AI_STONE),
+    ]
+    for row, col, stone in placements:
+        board[row][col] = stone
+    return board
 
-- Easy/Medium/Hard trả nước ổn định trong giới hạn thời gian.
-- Nếu hết giờ, bot vẫn trả một nước hợp lệ.
 
-### 5. Candidate generation thông minh hơn
+def create_block_board() -> list[list[int]]:
+    board = empty_board()
+    for col in range(5, 9):
+        board[7][col] = HUMAN_STONE
+    board[6][6] = AI_STONE
+    board[8][6] = AI_STONE
+    return board
 
-**Mục tiêu**
 
-Giảm branching factor nhưng không bỏ sót nước chiến thuật bắt buộc.
+def center_first_move(board: list[list[int]]) -> tuple[int, int] | None:
+    center = BOARD_SIZE // 2
+    if board[center][center] == EMPTY:
+        return (center, center)
+    for radius in range(1, BOARD_SIZE):
+        for row in range(max(0, center - radius), min(BOARD_SIZE, center + radius + 1)):
+            for col in range(max(0, center - radius), min(BOARD_SIZE, center + radius + 1)):
+                if board[row][col] == EMPTY:
+                    return (row, col)
+    return None
 
-**Việc cần làm**
 
-- Giữ candidate theo vùng gần quân hiện có.
-- Luôn thêm tactical candidates dù vượt `candidate_limit`.
-- Điều chỉnh radius theo giai đoạn:
-  - đầu game nhỏ;
-  - giữa/cuối game hoặc có threat thì mở rộng.
-- Loại candidate trùng và sort ổn định.
+def run_ai_case(name: str, board: list[list[int]]) -> list[dict]:
+    rows: list[dict] = []
+    for difficulty in DIFFICULTY_CONFIGS:
+        ai = get_ai(difficulty)
+        start = time.perf_counter()
+        analysis = ai.get_move_analysis([row[:] for row in board], AI_STONE)
+        elapsed_ms = (time.perf_counter() - start) * 1000
+        rows.append(
+            {
+                "case": name,
+                "agent": f"project_{difficulty}",
+                "move": analysis.move,
+                "score": analysis.score,
+                "reason": analysis.reason,
+                "completed_depth": analysis.completed_depth,
+                "elapsed_ms": round(elapsed_ms, 2),
+            }
+        )
+    return rows
 
-**File chính**
 
-- `backend/ai_core.py`
+def run_center_baseline_case(name: str, board: list[list[int]]) -> dict:
+    start = time.perf_counter()
+    move = center_first_move([row[:] for row in board])
+    elapsed_ms = (time.perf_counter() - start) * 1000
+    return {
+        "case": name,
+        "agent": "center_first_baseline",
+        "move": move,
+        "score": 0,
+        "reason": "center_or_nearest_empty",
+        "completed_depth": 0,
+        "elapsed_ms": round(elapsed_ms, 2),
+    }
 
-**Done khi**
 
-- Nước chặn/thắng không bị loại bởi giới hạn candidate.
-- Empty board vẫn chọn trung tâm.
+def main() -> None:
+    cases = {
+        "opening": empty_board(),
+        "midgame": create_midgame_board(),
+        "block_open_four": create_block_board(),
+    }
+    results: list[dict] = []
+    for name, board in cases.items():
+        results.append(run_center_baseline_case(name, board))
+        results.extend(run_ai_case(name, board))
 
-## Phase 3: Nâng chất lượng đánh cờ
+    output_path = ROOT_DIR / "benchmark_results.json"
+    output_path.write_text(json.dumps(results, ensure_ascii=False, indent=2), encoding="utf-8")
+    print(json.dumps(results, ensure_ascii=False, indent=2))
+    print(f"Saved benchmark results to {output_path}")
 
-### 6. Threat detection
 
-**Mục tiêu**
+if __name__ == "__main__":
+    main()
+```
 
-Nhận diện các thế caro quan trọng thay vì chỉ đếm chuỗi liên tục.
+- [ ] **Step 2: Chạy benchmark**
 
-**Việc cần làm**
+Run:
 
-- Viết module/helper phát hiện:
-  - five;
-  - open four;
-  - closed four;
-  - open three;
-  - broken three;
-  - double threat.
-- Trả về threat summary cho từng move hoặc từng board.
-- Dùng threat summary trong move ordering và evaluation.
+```powershell
+.\backend\venv\Scripts\python.exe benchmark_ai.py
+```
 
-**File chính**
+Expected: terminal in ra JSON gồm `center_first_baseline`, `project_easy`, `project_medium`, `project_hard` cho từng case.
 
-- `backend/ai_core.py`
-- Có thể tách `backend/threats.py` nếu file core bắt đầu quá lớn.
+- [ ] **Step 3: Ghi số liệu vào báo cáo**
 
-**Done khi**
+Use `benchmark_results.json` to build a table with:
 
-- Bot nhận ra open four và broken three.
-- Double threat được chấm cao hơn threat đơn.
+```text
+Case | Agent | Move | Reason | Completed Depth | Time (ms)
+```
 
-### 7. Cải thiện heuristic
+Expected: báo cáo có số liệu thực nghiệm thay vì chỉ mô tả thuật toán.
 
-**Mục tiêu**
+- [ ] **Step 4: Dọn cache nếu benchmark làm thay đổi cache tracked**
 
-Đánh giá board sát thực tế Gomoku hơn.
+Run:
 
-**Việc cần làm**
+```powershell
+git status --short
+```
 
-- Thay hoặc bổ sung evaluator pattern-based.
-- Nhận diện các mẫu như:
-  - `_XXXX_`
-  - `_XXXXO`
-  - `XX_XX`
-  - `X_XXX`
-  - `_XXX_`
-  - `_XX_X_`
-- Tách điểm attack và defense nếu cần.
-- Giữ score terminal thắng/thua cao hơn mọi heuristic thường.
+Expected: nếu `backend/gomoku_tt.pkl` bị thay đổi do benchmark, restore file đó trước khi commit nếu task không yêu cầu lưu cache:
 
-**File chính**
+```powershell
+git restore --source=HEAD -- backend\gomoku_tt.pkl
+```
 
-- `backend/ai_core.py`
-- Có thể tách `backend/evaluator.py`.
+---
 
-**Done khi**
+## Task 3: Cải Thiện Pattern-Based Evaluator
 
-- Bot không đánh giá thấp chuỗi bị hở ở giữa.
-- Bot ưu tiên thế tạo thắng bắt buộc hơn nước chỉ tăng điểm nhỏ.
+**Mục tiêu:** Giúp AI đánh giá tốt hơn các pattern Gomoku quan trọng như open-four, broken-four và open-three.
 
-### 8. Threat extension / quiescence có giới hạn
+**Files:**
+- Modify: `backend/threats.py`
+- Modify: `backend/evaluator.py`
+- Test: `tests/test_tactical_cases.py`
 
-**Mục tiêu**
+- [ ] **Step 1: Thêm tactical cases cho broken four**
 
-Không dừng search ở trạng thái đang có threat nguy hiểm.
+Append to `tests/fixtures/tactical_cases.jsonl`:
 
-**Việc cần làm**
+```jsonl
+{"name":"block_human_broken_four_x_xxx","player":1,"board":["...............","...............","...............","...............","...............","...............","...............",".....X.XXX.....","...............","...............","...............","...............","...............","...............","..............."],"expected_moves":[[7,6]],"tags":["block","broken_four"]}
+{"name":"block_human_broken_four_xxx_x","player":1,"board":["...............","...............","...............","...............","...............","...............","...............",".....XXX.X.....","...............","...............","...............","...............","...............","...............","..............."],"expected_moves":[[7,8]],"tags":["block","broken_four"]}
+```
 
-- Ở depth 0, nếu board có open four/open three quan trọng, search tiếp một số forcing moves.
-- Giới hạn extension bằng:
-  - max extension depth;
-  - chỉ xét tactical candidates;
-  - vẫn tôn trọng time limit.
+- [ ] **Step 2: Chạy test để ghi nhận hành vi hiện tại**
 
-**File chính**
+Run:
 
-- `backend/ai_core.py`
+```powershell
+.\backend\venv\Scripts\python.exe -m pytest tests\test_tactical_cases.py -v
+```
 
-**Done khi**
+Expected: nếu FAIL ở broken-four, failure message chỉ rõ case và nước AI chọn.
 
-- Bot ít bị horizon effect ở tình huống sắp thắng/sắp thua.
-- Không làm thời gian phản hồi vượt quá cấu hình.
+- [ ] **Step 3: Mở rộng threat pattern nếu test fail**
 
-## Phase 4: API và UI người - máy
+Update `backend/threats.py` in `ThreatDetector.summarize_line()` so `closed_four` also catches common broken-four windows:
 
-### 9. API/UI cho độ khó
+```python
+broken_four = self._count_windows(
+    padded,
+    6,
+    lambda window: window.count("1") == 4 and window.count("0") == 2 and "2" not in window and any(
+        pattern in window for pattern in ("11011", "11101", "10111")
+    ),
+)
+closed_four = max(0, four_windows - open_four * 2) + broken_four
+```
 
-**Mục tiêu**
+Expected: broken-four threats are scored as urgent defensive or attacking threats.
 
-Cho người chơi chọn độ khó và kiểm soát thời gian suy nghĩ của bot.
+- [ ] **Step 4: Cân chỉnh score nếu AI vẫn ưu tiên sai**
 
-**Việc cần làm**
+Update `backend/evaluator.py` only if tactical tests still fail. Keep terminal wins higher than all normal threats:
 
-- Backend nhận thêm `difficulty` hoặc search config trong request.
-- Map difficulty:
-  - Easy: depth thấp, time limit ngắn;
-  - Medium: cân bằng;
-  - Hard: depth/time limit cao hơn, bật threat extension.
-- Frontend thêm control chọn độ khó.
-- Reset game giữ hoặc clear difficulty theo UX đã chọn.
+```python
+THREAT_SCORES = {
+    "five": 1_000_000,
+    "open_four": 160_000,
+    "closed_four": 45_000,
+    "open_three": 8_000,
+    "broken_three": 3_000,
+    "double_threat": 55_000,
+}
+```
 
-**File chính**
+Expected: evaluator ưu tiên threat bắt buộc hơn các nước tăng điểm nhỏ.
 
-- `backend/main.py`
-- `backend/ai_core.py`
-- `frontend/src/App.jsx`
-- `frontend/src/App.css`
+- [ ] **Step 5: Chạy lại tactical test**
 
-**Done khi**
+Run:
 
-- Người chơi đổi difficulty được từ UI.
-- Backend fallback an toàn nếu thiếu difficulty.
+```powershell
+.\backend\venv\Scripts\python.exe -m pytest tests\test_tactical_cases.py -v
+```
 
-### 10. Trả thêm lý do nước đi
+Expected: PASS.
 
-**Mục tiêu**
+---
 
-Hỗ trợ debug và giúp hiểu vì sao bot chọn nước đó.
+## Task 4: Enhanced Transposition Table Với Best Move
 
-**Việc cần làm**
+**Mục tiêu:** Lưu `best_move` trong transposition table để cải thiện move ordering ở các lần search sau.
 
-- Backend trả thêm `reason`, ví dụ:
-  - `winning_move`;
-  - `blocking_win`;
-  - `creating_open_four`;
-  - `blocking_open_four`;
-  - `best_search_score`;
-  - `timeout_best_known`.
-- Frontend hiển thị reason trong status hoặc debug panel nhỏ.
-- Không để reason ảnh hưởng tới logic đặt quân.
+**Files:**
+- Modify: `backend/ai_core.py`
+- Modify: `backend/ai_types.py` nếu cần dataclass riêng cho TT entry.
+- Test: `tests/test_tactical_cases.py`
 
-**File chính**
+- [ ] **Step 1: Đổi cấu trúc transposition table**
 
-- `backend/main.py`
-- `backend/ai_core.py`
-- `frontend/src/App.jsx`
+In `backend/ai_core.py`, replace:
 
-**Done khi**
+```python
+self.transposition_table: dict[int, tuple[int, float, str]] = {}
+```
 
-- Response có lý do nước đi.
-- UI hiển thị lý do ngắn gọn.
+with:
 
-## Test Plan
+```python
+self.transposition_table: dict[int, tuple[int, float, str, tuple[int, int] | None]] = {}
+```
 
-### Unit tests cho AI core
+- [ ] **Step 2: Update load/save memory**
 
-- Empty board chọn trung tâm.
-- AI có 4 quân liên tiếp thì đánh thắng ngay.
-- Human có 4 quân liên tiếp thì AI chặn.
-- Board đã kết thúc thì không trả move.
-- Candidate generation không trả ô đã có quân.
-- Transposition table phân biệt side-to-move.
-- Pattern evaluator nhận ra open four, closed four, broken three.
+Update `load_memory()` to accept both old 3-field entries and new 4-field entries:
 
-### API tests
+```python
+normalized_entries = {}
+for board_hash, entry in entries.items():
+    if len(entry) == 3:
+        depth, score, flag = entry
+        best_move = None
+    else:
+        depth, score, flag, best_move = entry
+        if best_move is not None:
+            best_move = (int(best_move[0]), int(best_move[1]))
+    normalized_entries[int(board_hash)] = (int(depth), float(score), str(flag), best_move)
+self.transposition_table = normalized_entries
+```
 
-- `/api/health` trả `ok`.
-- `/api/get-move` reject board sai kích thước.
-- `/api/get-move` reject cell ngoài `-1, 0, 1`.
-- `/api/get-move` trả move hợp lệ cho board thường.
-- Difficulty thiếu thì dùng default.
+Expected: cache cũ không làm engine crash.
 
-### Manual tests
+- [ ] **Step 3: Update cache read sites**
 
-- Chơi vài ván ở Easy/Medium/Hard.
-- Kiểm tra bot không delay quá lâu.
-- Kiểm tra UI không cho click khi bot đang suy nghĩ.
-- Kiểm tra arena vẫn chạy sau khi core thay đổi.
+In `_minimax()`, replace:
 
-## Thứ tự ưu tiên khuyến nghị
+```python
+cached_depth, cached_score, cached_flag = cached
+```
 
-1. Sửa transposition table và perspective.
-2. Thêm immediate win/block.
-3. Nâng move ordering.
-4. Thêm iterative deepening với time limit.
-5. Cải thiện candidate generation.
-6. Thêm threat detection.
-7. Cải thiện heuristic pattern-based.
-8. Thêm threat extension có giới hạn.
-9. Thêm difficulty ở API/UI.
-10. Trả reason cho nước đi.
+with:
 
-## Rủi ro chính
+```python
+cached_depth, cached_score, cached_flag, _cached_best_move = cached
+```
 
-- Threat evaluator phức tạp có thể làm search chậm nếu gọi quá nhiều lần.
-- Candidate limit quá thấp có thể bỏ sót nước phòng thủ nếu không giữ tactical candidates.
-- Transposition table lưu ra file có thể phình to; cần cân nhắc giới hạn kích thước sau này.
-- Iterative deepening cần timeout sạch để không để board mutate dở trong recursion.
+Expected: existing alpha/beta logic remains unchanged.
 
-## Kết quả mong muốn
+- [ ] **Step 4: Store best move after search**
 
-Sau khi hoàn thành, chế độ người - máy sẽ có bot:
+Track `best_move` in `_minimax()` loops and store:
 
-- đánh thắng/chặn thắng ngay ổn định;
-- ít bỏ sót threat quan trọng;
-- phản hồi trong thời gian kiểm soát được;
-- có nhiều mức độ khó;
-- dễ debug hơn nhờ reason/evaluation rõ ràng.
+```python
+self.transposition_table[search_hash] = (depth, value, flag, best_move)
+```
+
+Expected: each cached non-leaf node can carry the move that produced the cached value.
+
+- [ ] **Step 5: Prioritize cached best move**
+
+Before iterating candidates in `_minimax()`, compute:
+
+```python
+cached_best_move = cached[3] if cached is not None else None
+if cached_best_move in candidates:
+    candidates = self._prioritize_move(candidates, cached_best_move)
+```
+
+Expected: principal candidate is searched first when available.
+
+- [ ] **Step 6: Run tactical tests and benchmark**
+
+Run:
+
+```powershell
+.\backend\venv\Scripts\python.exe -m pytest tests\test_tactical_cases.py -v
+.\backend\venv\Scripts\python.exe benchmark_ai.py
+```
+
+Expected: tactical tests pass; benchmark time should stay same or improve.
+
+---
+
+## Task 5: Threat Space Search / VCF Solver Tối Giản
+
+**Mục tiêu:** Thêm search riêng cho forcing line đơn giản, giúp AI tìm chuỗi tạo four và thắng bắt buộc tốt hơn minimax thường.
+
+**Files:**
+- Modify: `backend/ai_core.py`
+- Modify: `backend/move_ordering.py`
+- Test: `tests/test_tactical_cases.py`
+
+- [ ] **Step 1: Thêm case forcing win hai bước**
+
+Append to `tests/fixtures/tactical_cases.jsonl`:
+
+```jsonl
+{"name":"prefer_creating_open_four_over_small_attack","player":1,"board":["...............","...............","...............","...............","...............","...............",".....OOO.......",".....XX........","...............","...............","...............","...............","...............","...............","..............."],"expected_moves":[[6,4],[6,8]],"tags":["attack","open_four"]}
+```
+
+- [ ] **Step 2: Chạy test trước khi sửa**
+
+Run:
+
+```powershell
+.\backend\venv\Scripts\python.exe -m pytest tests\test_tactical_cases.py -v
+```
+
+Expected: nếu FAIL, ghi nhận đây là case chứng minh cần threat-space search.
+
+- [ ] **Step 3: Thêm helper tìm forcing candidates**
+
+In `backend/move_ordering.py`, keep `generate_forcing_candidates()` focused on:
+
+```python
+if summary.open_four or summary.closed_four:
+    return True
+```
+
+Expected: threat-space search chỉ xét nước tạo hoặc chặn four, tránh branching quá rộng.
+
+- [ ] **Step 4: Thêm VCF search tối giản**
+
+In `backend/ai_core.py`, add:
+
+```python
+def _find_forcing_win(
+    self,
+    board: list[list[int]],
+    attacker: int,
+    defender: int,
+    depth: int,
+    deadline: float | None,
+) -> tuple[int, int] | None:
+    if depth <= 0:
+        return None
+
+    candidates = self._generate_forcing_candidates(board)
+    for row, col in candidates:
+        self._check_deadline(deadline)
+        if board[row][col] != EMPTY:
+            continue
+        board[row][col] = attacker
+        try:
+            if self._has_winner(board, attacker):
+                return (row, col)
+            defender_block = self._find_winning_move(board, attacker)
+            if defender_block is None:
+                continue
+            block_row, block_col = defender_block
+            board[block_row][block_col] = defender
+            try:
+                reply = self._find_forcing_win(board, attacker, defender, depth - 1, deadline)
+                if reply is not None:
+                    return (row, col)
+            finally:
+                board[block_row][block_col] = EMPTY
+        finally:
+            board[row][col] = EMPTY
+    return None
+```
+
+Expected: helper thử các forcing moves và kiểm tra chuỗi thắng đơn giản.
+
+- [ ] **Step 5: Gọi forcing search trước minimax thường**
+
+In `_get_move_analysis_for_ai()`, after immediate win/block and before iterative deepening:
+
+```python
+forcing_move = self._find_forcing_win(board, AI_STONE, HUMAN_STONE, depth=2, deadline=self._search_deadline())
+if forcing_move is not None:
+    return MoveAnalysis(
+        move=forcing_move,
+        score=500_000,
+        reason=self._classify_move_reason(board, forcing_move),
+        completed_depth=0,
+    )
+```
+
+Expected: AI chọn nước tạo forcing line rõ ràng trước khi vào search thông thường.
+
+- [ ] **Step 6: Run verification**
+
+Run:
+
+```powershell
+.\backend\venv\Scripts\python.exe -m pytest tests\test_tactical_cases.py -v
+.\backend\venv\Scripts\python.exe benchmark_ai.py
+```
+
+Expected: tactical tests pass; benchmark không timeout bất thường.
+
+---
+
+## Task 6: Viết Phần Benchmark So Sánh Với Model/Engine Khác
+
+**Mục tiêu:** Báo cáo có phần so sánh đúng mức với các engine/model hiện có mà không claim quá đà.
+
+**Files:**
+- Create: `REPORT_AI_BENCHMARK_NOTES.md`
+
+- [ ] **Step 1: Tạo bảng so sánh định tính**
+
+Create `REPORT_AI_BENCHMARK_NOTES.md` with:
+
+```markdown
+# AI Benchmark and Contribution Notes
+
+## So sánh định tính với các hướng AI Gomoku hiện có
+
+| Hệ thống | Hướng tiếp cận | Điểm mạnh | Khác biệt với dự án |
+|---|---|---|---|
+| Rapfi | Alpha-beta nâng cao + classical/NNUE evaluation | Engine rất mạnh, tối ưu sâu, có NNUE | Dự án không dùng NNUE/training, tập trung classical search dễ giải thích |
+| Yixin | Traditional alpha-beta + tri thức Gomoku/Renju mạnh | Từng là engine mạnh cấp thi đấu | Dự án nhỏ hơn, hướng học thuật, minh họa rõ các thành phần search/evaluator |
+| AlphaZero-Gomoku | Self-play RL + neural network + MCTS | Có khả năng học từ self-play | Dự án không training, không cần GPU, dễ kiểm soát heuristic |
+| Baseline minimax đơn giản | Minimax/alpha-beta cơ bản | Dễ triển khai | Dự án bổ sung candidate pruning, move ordering, threat detection, TT và time limit |
+
+## Đóng góp AI chính của dự án
+
+1. Giảm branching factor bằng candidate generation quanh quân đã đánh.
+2. Nâng hiệu quả alpha-beta bằng move ordering dựa trên tactical score.
+3. Nhận diện threat Gomoku: open-four, closed-four, open-three, broken-three, double threat.
+4. Dùng pattern-based evaluation theo công thức AttackScore - DefenseScore.
+5. Kiểm tra immediate win/block trước search sâu.
+6. Dùng iterative deepening và time limit để phản hồi ổn định.
+7. Dùng Zobrist hashing và transposition table có side-to-move.
+8. Có arena self-play để sinh JSONL phục vụ phân tích hoặc training sau này.
+
+## Benchmark thực nghiệm trong dự án
+
+Sử dụng `benchmark_ai.py` để đo:
+
+- Thời gian trung bình mỗi nước.
+- Completed depth.
+- Reason trả về.
+- Khả năng chọn đúng nước trong tactical cases.
+- So sánh Easy/Medium/Hard với center-first baseline.
+```
+
+- [ ] **Step 2: Thêm số liệu từ benchmark_results.json**
+
+After running `benchmark_ai.py`, append a table:
+
+```markdown
+## Kết quả benchmark local
+
+| Case | Agent | Move | Reason | Completed Depth | Time (ms) |
+|---|---|---|---|---:|---:|
+```
+
+Fill rows from `benchmark_results.json`.
+
+- [ ] **Step 3: Viết kết luận không claim quá mức**
+
+Append:
+
+```markdown
+Kết quả benchmark không nhằm chứng minh dự án mạnh hơn các engine thi đấu như Rapfi hoặc Yixin. Mục tiêu là chứng minh các cải tiến classical AI giúp bot xử lý tốt hơn các tình huống chiến thuật Gomoku so với baseline đơn giản, đồng thời vẫn phản hồi trong thời gian phù hợp cho ứng dụng tương tác.
+```
+
+Expected: báo cáo có định vị đúng, không so sánh sai với state-of-the-art.
+
+---
+
+## Verification Checklist
+
+Trước khi coi plan là hoàn thành, chạy các lệnh sau:
+
+```powershell
+.\backend\venv\Scripts\python.exe -m py_compile backend\ai_types.py backend\board_rules.py backend\threats.py backend\evaluator.py backend\move_ordering.py backend\ai_core.py backend\main.py arena\engine.py arena\run_arena.py
+```
+
+Expected: không có syntax error.
+
+```powershell
+.\backend\venv\Scripts\python.exe -m pytest tests\test_tactical_cases.py -v
+```
+
+Expected: tactical tests pass.
+
+```powershell
+.\backend\venv\Scripts\python.exe benchmark_ai.py
+```
+
+Expected: tạo `benchmark_results.json` và in kết quả benchmark.
+
+```powershell
+.\backend\venv\Scripts\python.exe -m arena.run_arena --games 1 --depth 1 --candidate-radius 1 --candidate-limit 4 --max-moves 6 --no-save
+```
+
+Expected: arena smoke test chạy xong và in summary JSON.
+
+```powershell
+git status --short
+```
+
+Expected: chỉ có các file chủ đích bị thay đổi. Không commit cache `.pkl` hoặc dataset mới nếu task không yêu cầu.
+
+---
+
+## Thứ Tự Ưu Tiên Khuyến Nghị
+
+1. Tactical benchmark suite.
+2. Benchmark script cho báo cáo.
+3. Pattern-based evaluator nâng cao.
+4. Enhanced transposition table lưu best move.
+5. Threat Space Search / VCF solver tối giản.
+6. Báo cáo benchmark và contribution notes.
+
+Nếu thời gian hạn chế, chỉ cần hoàn thành Tasks 1, 2 và 6 là đủ để có báo cáo AI có số liệu và đóng góp rõ ràng. Nếu muốn cải thiện chất lượng bot thật sự, làm tiếp Tasks 3 và 5.

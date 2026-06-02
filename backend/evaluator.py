@@ -18,11 +18,11 @@ class BoardEvaluator:
     }
     THREAT_SCORES = {
         "five": 1_000_000,
-        "open_four": 140_000,
-        "closed_four": 25_000,
-        "open_three": 7_000,
-        "broken_three": 2_500,
-        "double_threat": 45_000,
+        "open_four": 160_000,
+        "closed_four": 45_000,
+        "open_three": 8_000,
+        "broken_three": 3_000,
+        "double_threat": 55_000,
     }
 
     def __init__(self, threat_detector: ThreatDetector, board_size: int = BOARD_SIZE) -> None:

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from functools import lru_cache
+import os
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
@@ -10,11 +11,19 @@ from pydantic import BaseModel, Field, field_validator
 from ai_core import AI_STONE, BOARD_SIZE, EMPTY, GomokuAI, HUMAN_STONE, SearchConfig
 
 
+def get_cors_origins() -> list[str]:
+    raw_origins = os.getenv("FRONTEND_ORIGINS", "*").strip()
+    if not raw_origins or raw_origins == "*":
+        return ["*"]
+    return [origin.strip().rstrip("/") for origin in raw_origins.split(",") if origin.strip()]
+
+
+CORS_ORIGINS = get_cors_origins()
 app = FastAPI(title="Gomoku Minimax API", version="1.0.0")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
+    allow_origins=CORS_ORIGINS,
+    allow_credentials="*" not in CORS_ORIGINS,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -77,6 +86,15 @@ class MoveResponse(BaseModel):
     difficulty: str
     completed_depth: int
     message: str
+
+
+@app.get("/")
+def root() -> dict[str, str]:
+    return {
+        "service": "Gomoku Minimax API",
+        "health": "/api/health",
+        "docs": "/docs",
+    }
 
 
 @app.get("/api/health")

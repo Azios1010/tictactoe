@@ -257,6 +257,23 @@ Arena smoke test:
 - `AGENTS.md`: tổng quan cho người/agent mới vào dự án.
 - `PIPELINE.md`: quy trình phát triển, test, benchmark và review.
 - `IMPLEMENTATION_PLAN.md`: kế hoạch nâng cấp AI theo phase.
+- `DEPLOYMENT.md`: hướng dẫn deploy frontend lên Vercel và backend/arena lên Render.
+
+## Deploy internet
+
+Dự án đã có cấu hình `render.yaml` cho Render Blueprint:
+
+- `gomoku-ai-backend`: FastAPI người - máy.
+- `gomoku-ai-arena`: FastAPI arena tự đấu.
+
+Frontend deploy bằng Vercel với root directory `frontend`. Cần cấu hình:
+
+```text
+VITE_API_BASE_URL=https://<render-backend-url>
+VITE_ARENA_API_BASE_URL=https://<render-arena-url>
+```
+
+Xem chi tiết trong `DEPLOYMENT.md`.
 
 ## Lưu ý khi phát triển
 

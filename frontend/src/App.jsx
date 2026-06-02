@@ -323,7 +323,7 @@ function App() {
         },
         body: JSON.stringify({
           games: arenaBatchSize,
-          save_to_disk: true
+          save_to_disk: false
         })
       })
 
@@ -369,7 +369,7 @@ function App() {
         <p className="hero-copy">
           {mode === 'play'
             ? 'Interactive mode uses the existing FastAPI backend and minimax evaluator.'
-            : 'Arena mode runs two AIs against each other, replays the latest game, and saves JSONL samples for downstream deep learning training.'}
+            : 'Arena mode runs two AIs against each other, replays the latest game, and summarizes samples for downstream analysis.'}
         </p>
 
         <div className="mode-switch" role="tablist" aria-label="Game mode">

@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: gomoku-ai-backend
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: FRONTEND_ORIGINS
+        value: "*"
+
+  - type: web
+    name: gomoku-ai-arena
+    runtime: python
+    buildCommand: pip install -r backend/requirements.txt
+    startCommand: uvicorn arena.service:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /arena/api/health
+    autoDeploy: true
+    envVars:
+      - key: FRONTEND_ORIGINS
+        value: "*"

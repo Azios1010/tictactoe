@@ -1,250 +1,252 @@
-# Checklist phan viec cho 3 thanh vien con lai
+# Checklist phan viec can bang cho 3 thanh vien
 
-Muc tieu: moi thanh vien co phan viec ro rang, co dau ra cu the de ban tong hop vao report va dung khi thuyet trinh/demo. Moi nguoi can cap nhat tien do bang cach tick checklist va gui lai minh chung.
+Muc tieu: 3 thanh vien con lai co khoi luong cong viec tuong duong nhau. Moi nguoi deu co 4 loai viec:
 
-Nguoi lam report: tong hop ket qua tu 3 nguoi nay vao `REPORT_BTL.md`, slide va phan trinh bay.
+- Viec ky thuat/cau hinh.
+- Viec kiem tra va thu thap minh chung.
+- Viec viet noi dung de dua vao report.
+- Viec chuan bi phan noi/demo khi thuyet trinh.
 
-## Thong tin can dien truoc khi bat dau
+Nguoi lam report se tong hop ket qua tu file nay vao `REPORT_BTL.md`, slide va kich ban thuyet trinh.
+
+## Thong tin chung can dien
 
 - [ ] Link GitHub repository:
 - [ ] Link Vercel frontend:
 - [ ] Link Render backend:
 - [ ] Link Render arena:
 - [ ] Ngay demo/thuyet trinh:
-- [ ] Ten thanh vien phu trach Deploy:
-- [ ] Ten thanh vien phu trach AI core:
-- [ ] Ten thanh vien phu trach Benchmark/UI:
+- [ ] Thanh vien A:
+- [ ] Thanh vien B:
+- [ ] Thanh vien C:
 
-## Quy uoc nop lai ket qua
+## Nguyen tac chia viec
 
-Moi thanh vien nop lai cho nguoi lam report:
+- [ ] Moi thanh vien phai nop it nhat 1 bang/tom tat co cau truc.
+- [ ] Moi thanh vien phai nop it nhat 2 anh chup man hinh hoac minh chung.
+- [ ] Moi thanh vien phai viet 1 doan 5-7 cau cho report.
+- [ ] Moi thanh vien phai chuan bi 3-4 phut noi trong buoi thuyet trinh.
+- [ ] Neu co thay doi code/tai lieu, phai commit va push len GitHub.
 
-- [ ] 3-5 gach dau dong tom tat viec da lam.
-- [ ] Anh chup man hinh hoac link minh chung.
-- [ ] Loi/kho khan gap phai va cach xu ly.
-- [ ] 1 doan ngan 5-7 cau de dua vao report.
-- [ ] Neu co thay doi code, commit len GitHub va ghi ma commit.
+## Bang phan viec tong quan
 
-## Thanh vien 1: Deploy va van hanh demo online
+| Thanh vien | Vai tro chinh | Phan ky thuat | Phan minh chung | Phan report | Phan thuyet trinh |
+|---|---|---|---|---|---|
+| A | AI va tactical demo | Giai thich AI core, tao case demo | Anh/case AI chon nuoc | Phuong phap AI | 3-4 phut |
+| B | Deploy va tich hop he thong | Vercel, Render, env, CORS | Link online, health check, docs | Kien truc deploy | 3-4 phut |
+| C | Benchmark, UI va danh gia | Build/test, benchmark, UI test | Bang benchmark, anh UI | Danh gia ket qua | 3-4 phut |
+
+## Thanh vien A: AI core va tactical demo
 
 ### Muc tieu
 
-Dam bao du an chay duoc tren internet, co link demo cong khai, backend/arena hoat dong va frontend goi dung API.
+Chung minh phan AI cua du an co co so thuat toan ro rang, co the giai thich duoc ly do chon nuoc di, va co cac case chien thuat de demo.
 
-### Nhiem vu chi tiet
+### A1. Doc va tom tat AI core
+
+- [ ] Doc `backend/ai_core.py`.
+- [ ] Doc `backend/ai_types.py`.
+- [ ] Doc `backend/board_rules.py`.
+- [ ] Doc `backend/threats.py`.
+- [ ] Doc `backend/evaluator.py`.
+- [ ] Doc `backend/move_ordering.py`.
+- [ ] Viet tom tat 8-10 gach dau dong ve luong AI.
+
+Goi y luong AI:
+
+```text
+Board -> validate/normalize -> immediate win/block -> candidate generation -> move ordering -> iterative deepening -> minimax/alpha-beta -> evaluator -> MoveAnalysis
+```
+
+### A2. Lap bang thuat toan
+
+- [ ] Lap bang giai thich ngan gon cac thanh phan sau:
+  - Minimax.
+  - Alpha-beta pruning.
+  - Iterative deepening.
+  - Candidate pruning.
+  - Move ordering.
+  - Threat detection.
+  - Heuristic evaluator.
+  - Zobrist hash/transposition table.
+
+Mau bang:
+
+| Thanh phan | Vai tro trong du an | Loi ich |
+|---|---|---|
+| Minimax | Gia lap hai ben di toi uu | Chon nuoc co diem search tot |
+| Alpha-beta | Cat nhanh nhanh khong can xet | Giam so node phai duyet |
+
+### A3. Chuan bi 3 tactical demo cases
+
+- [ ] Case 1: AI thang ngay bang `winning_move`.
+- [ ] Case 2: AI chan nguoi choi thang ngay bang `blocking_win`.
+- [ ] Case 3: AI tao threat, vi du `creating_open_four`, `creating_double_threat` hoac `best_search_score`.
+- [ ] Ghi lai board/cach tao case.
+- [ ] Chup anh UI hoac Swagger response cho moi case.
+
+Mau ghi case:
+
+| Case | Mo ta board | Difficulty | AI move | Reason | Evaluation | Completed depth |
+|---|---|---|---|---|---:|---:|
+| A1 | AI co 4 quan lien tiep | Medium | | | | |
+
+### A4. Viet noi dung cho report
+
+- [ ] Viet 1 doan 5-7 cau ve AI.
+- [ ] Viet 1 bang reason cua AI.
+- [ ] Viet 3 han che cua AI hien tai.
+- [ ] Viet 3 huong cai tien tiep theo.
+
+Doan mau co the sua:
+
+```text
+AI cua du an la classical Gomoku engine, khong dung reinforcement learning hay neural network. Engine ket hop minimax/alpha-beta voi iterative deepening, candidate pruning, move ordering, threat detection va heuristic evaluator. Truoc khi search sau, AI uu tien cac nuoc thang ngay hoac chan doi thu thang ngay. Cac threat Gomoku nhu open-four, closed-four, open-three va double-threat duoc dung de cham diem va sap xep nuoc di. Ket qua tra ve cho frontend gom move, evaluation, reason va completed_depth, giup viec demo va giai thich tro nen ro rang hon. Han che hien tai la AI van dua tren pattern heuristic va time limit, chua phai engine SOTA.
+```
+
+### A5. Chuan bi phan thuyet trinh
+
+- [ ] Noi trong 3-4 phut.
+- [ ] Giai thich vi sao Gomoku 15x15 kho hon tic-tac-toe 3x3.
+- [ ] Giai thich AI khong hoc tu du lieu, ma dung search + heuristic.
+- [ ] Demo 1 case AI chan thang hoac thang ngay.
+- [ ] Giai thich `reason`, `evaluation`, `completed_depth`.
+
+### Dau ra cua thanh vien A
+
+- [ ] Bang thuat toan.
+- [ ] Bang reason.
+- [ ] 3 tactical demo cases.
+- [ ] It nhat 2 anh chup minh chung.
+- [ ] 1 doan report 5-7 cau.
+- [ ] 3-4 bullet cho slide.
+
+## Thanh vien B: Deploy, tich hop va van hanh online
+
+### Muc tieu
+
+Chung minh he thong full-stack chay duoc tren internet, frontend va backend tach rieng, cau hinh dung env, CORS va health check.
+
+### B1. Kiem tra GitHub va cau hinh deploy
 
 - [ ] Kiem tra GitHub da co commit moi nhat.
-  - Len GitHub repository.
-  - Kiem tra cac file `render.yaml`, `DEPLOYMENT.md`, `frontend/.env.example`, `backend/.env.example` da xuat hien.
+- [ ] Kiem tra file `render.yaml`.
+- [ ] Kiem tra file `DEPLOYMENT.md`.
+- [ ] Kiem tra `frontend/.env.example`.
+- [ ] Kiem tra `backend/.env.example`.
+- [ ] Ghi lai commit hash moi nhat.
 
-- [ ] Kiem tra Render backend.
-  - Mo URL backend Render.
-  - Mo endpoint `/api/health`.
-  - Ket qua mong doi:
+Mau bang:
+
+| Hang muc | Ket qua | Minh chung |
+|---|---|---|
+| GitHub co `render.yaml` | Dat/Chua dat | Link file |
+| GitHub co `DEPLOYMENT.md` | Dat/Chua dat | Link file |
+
+### B2. Kiem tra Render backend va arena
+
+- [ ] Mo backend `/api/health`.
+- [ ] Mo backend `/docs`.
+- [ ] Mo arena `/arena/api/health`.
+- [ ] Mo arena `/docs`.
+- [ ] Chup anh 2 health checks.
+- [ ] Chup anh 2 Swagger docs hoac ghi link.
+
+Ket qua health mong doi:
 
 ```json
 {"status":"ok"}
 ```
 
-- [ ] Kiem tra Render arena.
-  - Mo URL arena Render.
-  - Mo endpoint `/arena/api/health`.
-  - Ket qua mong doi:
+### B3. Kiem tra Vercel env va luong API
 
-```json
-{"status":"ok"}
-```
+- [ ] Kiem tra Vercel co `VITE_API_BASE_URL`.
+- [ ] Kiem tra Vercel co `VITE_ARENA_API_BASE_URL`.
+- [ ] Kiem tra Render backend co `FRONTEND_ORIGINS`.
+- [ ] Kiem tra Render arena co `FRONTEND_ORIGINS`.
+- [ ] Dam bao value khong co dau `/` cuoi URL.
+- [ ] Sau khi sua env, redeploy frontend neu can.
 
-- [ ] Kiem tra Swagger docs.
-  - Mo `https://<render-backend-url>/docs`.
-  - Mo `https://<render-arena-url>/docs`.
-  - Chup anh man hinh 2 trang docs.
-
-- [ ] Kiem tra bien moi truong Vercel.
-  - Vao Vercel Project -> Settings -> Environment Variables.
-  - Dam bao co:
+Mau cau hinh:
 
 ```text
 VITE_API_BASE_URL=https://<render-backend-url>
 VITE_ARENA_API_BASE_URL=https://<render-arena-url>
-```
-
-- [ ] Kiem tra bien moi truong Render.
-  - Vao tung service backend/arena tren Render.
-  - Dam bao co:
-
-```text
 FRONTEND_ORIGINS=https://<vercel-frontend-url>
 ```
 
-  - Neu chua khoa CORS, tam thoi co the de `*`, nhung khi nop nen doi ve dung link Vercel.
+### B4. Test demo online
 
-- [ ] Test frontend online.
-  - Mo link Vercel.
-  - Choi mot van o Easy.
-  - Choi mot van o Medium.
-  - Chuyen sang Arena va bam `Run arena`.
-  - Chup anh man hinh app sau khi AI da di nuoc.
+- [ ] Mo link Vercel.
+- [ ] Choi mot nuoc tren Easy.
+- [ ] Choi mot nuoc tren Medium.
+- [ ] Chuyen sang Arena va bam `Run arena`.
+- [ ] Ghi lai neu request dau tien cham do Render warm up.
+- [ ] Chup anh app online sau khi AI da di nuoc.
 
-- [ ] Ghi lai loi deploy neu co.
-  - Vi du: CORS, backend sleep, sai env, Render build fail, Vercel build fail.
-  - Ghi cach khac phuc bang 2-3 cau.
+Mau bang:
 
-### Dau ra can nop
+| Tinh nang online | Ket qua | Ghi chu |
+|---|---|---|
+| Play Vs AI Easy | Dat/Chua dat | |
+| Play Vs AI Medium | Dat/Chua dat | |
+| Arena self-play | Dat/Chua dat | |
 
-- [ ] Link Vercel frontend.
-- [ ] Link Render backend `/api/health`.
-- [ ] Link Render backend `/docs`.
-- [ ] Link Render arena `/arena/api/health`.
-- [ ] Link Render arena `/docs`.
-- [ ] 3-5 anh chup minh chung.
-- [ ] Doan mo ta ngan cho report:
+### B5. Viet noi dung cho report va slide
+
+- [ ] Viet 1 doan 5-7 cau ve kien truc deploy.
+- [ ] Viet 1 bang link he thong.
+- [ ] Viet 3 loi deploy thuong gap va cach sua.
+- [ ] Viet 3 bullet ve loi ich cua deploy online so voi chi nop source.
+
+Doan mau co the sua:
 
 ```text
-He thong duoc deploy public bang Vercel cho frontend React/Vite va Render cho cac FastAPI service. Frontend doc URL API thong qua bien moi truong VITE_API_BASE_URL va VITE_ARENA_API_BASE_URL. Backend/arena gioi han CORS bang FRONTEND_ORIGINS de chi cho phep domain frontend goi API sau khi demo URL da on dinh.
+He thong duoc deploy public voi frontend React/Vite tren Vercel va hai FastAPI service tren Render. Frontend khong hard-code URL backend ma doc qua cac bien moi truong VITE_API_BASE_URL va VITE_ARENA_API_BASE_URL. Backend va arena doc FRONTEND_ORIGINS de cau hinh CORS, giup chi domain frontend duoc phep goi API sau khi deploy on dinh. Render cung cap health check cho tung service, con Vercel phuc vu giao dien web. Cach trien khai nay chung minh du an khong chi chay local ma co the demo truc tiep qua internet.
 ```
 
-### Phan thuyet trinh nen noi
+### Dau ra cua thanh vien B
 
-- [ ] Noi ro frontend va backend tach rieng.
-- [ ] Giai thich vi sao can env variable.
-- [ ] Demo app online, khong chay localhost.
-- [ ] Neu backend dau tien cham, giai thich Render can warm up.
+- [ ] Bang link he thong.
+- [ ] Bang cau hinh env.
+- [ ] Bang test online.
+- [ ] It nhat 2 anh chup minh chung.
+- [ ] 1 doan report 5-7 cau.
+- [ ] 3-4 bullet cho slide.
 
-## Thanh vien 2: AI core va giai thich thuat toan
+## Thanh vien C: Benchmark, kiem thu va danh gia UI
 
 ### Muc tieu
 
-Nam vung phan AI de giai thich duoc model hien tai "thong minh" o dau, dung thuat toan nao, vi sao AI chon nuoc di.
+Chung minh du an co kiem thu, co benchmark doc lap voi deploy, va co danh gia ro Easy/Medium/Hard cung trai nghiem UI.
 
-### Nhiem vu chi tiet
+### C1. Chay cac lenh kiem tra co ban
 
-- [ ] Doc cac file AI chinh.
-  - `backend/ai_core.py`
-  - `backend/ai_types.py`
-  - `backend/board_rules.py`
-  - `backend/threats.py`
-  - `backend/evaluator.py`
-  - `backend/move_ordering.py`
+- [ ] Chay Python compile check.
+- [ ] Chay frontend build.
+- [ ] Chay arena smoke test.
+- [ ] Ghi lai ket qua moi lenh.
+- [ ] Kiem tra `git status --short` sau khi test.
+- [ ] Khong commit cache/test output neu khong duoc yeu cau.
 
-- [ ] Tom tat kien truc AI bang 1 so do hoac danh sach.
-  - Input: board 15x15.
-  - Validate/normalize board.
-  - Immediate win/block.
-  - Candidate generation.
-  - Move ordering.
-  - Iterative deepening.
-  - Minimax/alpha-beta.
-  - Evaluator/threat detection.
-  - Output: row, col, evaluation, reason, completed depth.
-
-- [ ] Giai thich tung thanh phan chinh.
-  - Minimax: gia dinh 2 ben di toi uu.
-  - Alpha-beta pruning: cat nhanh cac nhanh khong can xet.
-  - Iterative deepening: tim theo do sau tang dan trong gioi han thoi gian.
-  - Candidate pruning: chi xet cac o gan quan da danh.
-  - Move ordering: uu tien nuoc co threat/manh truoc de cat nhanh hon.
-  - Threat detection: nhan dien open-four, closed-four, open-three, broken-three, double-threat.
-  - Evaluator: cham diem the co theo mau tan cong/phong thu.
-  - Zobrist hash/transposition table: nho trang thai da tim de tranh lap lai.
-
-- [ ] Chuan bi bang reason cua AI.
-
-| Reason | Y nghia |
-|---|---|
-| `opening_center` | Ban co rong, AI uu tien trung tam |
-| `winning_move` | AI co nuoc thang ngay |
-| `blocking_win` | AI chan nguoi choi thang ngay |
-| `creating_double_threat` | AI tao hai moi de doa cung luc |
-| `creating_open_four` | AI tao bon lien tiep mo |
-| `creating_closed_four` | AI tao bon lien tiep bi chan mot dau |
-| `blocking_double_threat` | AI chan the de doa kep cua doi thu |
-| `blocking_open_four` | AI chan open-four cua doi thu |
-| `building_attack` | AI xay dung tan cong |
-| `reducing_threat` | AI giam nguy co phong thu |
-| `best_search_score` | AI chon nuoc co diem search tot nhat |
-| `timeout_best_known` | Het thoi gian, dung nuoc tot nhat da biet |
-
-- [ ] Tao 3 case demo AI.
-  - Case 1: AI co 4 quan lien tiep va thang ngay.
-  - Case 2: Nguoi choi co 4 quan lien tiep, AI phai chan.
-  - Case 3: AI tao threat/double-threat hoac open-four.
-
-- [ ] Chay app va ghi lai reason/evaluation/completed depth cua 3 case.
-  - Neu kho tao case tren UI, co the ghi lai board va goi API qua Swagger `/docs`.
-
-- [ ] Viet phan han che cua AI.
-  - Khong phai SOTA engine.
-  - Chua co full Threat Space Search/VCF solver.
-  - Chua dung reinforcement learning/neural network.
-  - Search bi gioi han boi time limit va candidate pruning.
-  - Mot so double-threat phuc tap co the danh gia chua chuan.
-
-### Dau ra can nop
-
-- [ ] 1 bang tom tat thuat toan.
-- [ ] 1 bang reason cua AI.
-- [ ] 3 case demo co anh chup hoac mo ta board.
-- [ ] 1 doan ngan cho report:
-
-```text
-AI cua du an la classical Gomoku engine, ket hop minimax/alpha-beta voi iterative deepening, candidate pruning, move ordering, threat detection va heuristic evaluator. He thong uu tien cac nuoc thang/chan thang ngay truoc khi search sau hon, sau do danh gia cac nuoc ung vien dua tren threat Gomoku nhu open-four, closed-four, open-three va double-threat. Cach tiep can nay giup AI giai thich duoc ly do chon nuoc di thong qua cac truong reason, evaluation va completed_depth.
-```
-
-### Phan thuyet trinh nen noi
-
-- [ ] Giai thich AI khong hoc tu du lieu, ma search va heuristic.
-- [ ] Noi ro vi sao Gomoku 15x15 kho hon tic-tac-toe 3x3.
-- [ ] Demo AI chan thang hoac thang ngay.
-- [ ] Giai thich `completed_depth` de chung minh search co gioi han thoi gian.
-
-## Thanh vien 3: Benchmark, kiem thu va UI demo
-
-### Muc tieu
-
-Chung minh he thong da duoc test, AI co cai thien va UI demo duoc cac tinh nang chinh.
-
-### Nhiem vu chi tiet
-
-- [ ] Doc tai lieu benchmark va test.
-  - `PIPELINE.md`
-  - `IMPLEMENTATION_PLAN.md`
-  - `Gomoku_AI_Improvement_Roadmap.md`
-  - Neu co script benchmark trong repo, doc va chay theo huong dan hien co.
-
-- [ ] Chay backend compile check.
+Lenh goi y:
 
 ```powershell
 .\backend\venv\Scripts\python.exe -m py_compile backend\ai_types.py backend\board_rules.py backend\threats.py backend\evaluator.py backend\move_ordering.py backend\ai_core.py backend\main.py arena\engine.py arena\run_arena.py arena\service.py
-```
-
-- [ ] Chay frontend build.
-
-```powershell
 cd frontend
 npm.cmd run build
 ```
 
-- [ ] Chay arena smoke test.
+### C2. Benchmark Easy/Medium/Hard
 
-```powershell
-.\backend\venv\Scripts\python.exe -m arena.run_arena --games 1 --depth 1 --candidate-radius 1 --candidate-limit 4 --max-moves 6 --no-save
-```
+- [ ] Chay benchmark hoac test API cho Easy.
+- [ ] Chay benchmark hoac test API cho Medium.
+- [ ] Chay benchmark hoac test API cho Hard.
+- [ ] Ghi lai time, reason, completed depth.
+- [ ] So sanh trade-off toc do va do sau.
+- [ ] Neu Hard cham tren deploy, ghi chu dung Medium khi demo.
 
-- [ ] Test UI local hoac online.
-  - Choi mode Play Vs AI.
-  - Doi difficulty Easy/Medium/Hard.
-  - Kiem tra AI co hien:
-    - Move.
-    - Reason.
-    - Evaluation.
-    - Completed depth.
-    - Elapsed time.
-  - Chuyen Arena Self-Play.
-  - Bam `Run arena`.
-  - Kiem tra replay chay va co summary.
-
-- [ ] Tao bang benchmark Easy/Medium/Hard.
+Mau bang:
 
 | Difficulty | Case | AI move | Reason | Completed depth | Time (ms) | Ket qua |
 |---|---|---|---|---:|---:|---|
@@ -255,87 +257,107 @@ npm.cmd run build
 | Hard | Immediate win | | | | | |
 | Hard | Immediate block | | | | | |
 
-- [ ] Danh gia theo tieu chi.
-  - Do dung chien thuat: AI co chon dung nuoc thang/chan khong?
-  - Toc do: co phu hop demo tuong tac khong?
-  - Do sau: `completed_depth` co thuong lon hon 0 khong?
-  - UI: co de dung, de doc va khong bi loi khi deploy khong?
+### C3. Test UI va UX
 
-- [ ] Ghi lai cac loi va cach xu ly.
-  - Vi du: backend unreachable, sai env, CORS, build fail, AI Hard cham.
-  - Moi loi ghi: nguyen nhan, cach tai hien, cach sua.
+- [ ] Test Play Vs AI.
+- [ ] Test doi difficulty.
+- [ ] Test reset game.
+- [ ] Test AI debug panel: reason, evaluation, completed depth, elapsed time.
+- [ ] Test Arena Self-Play.
+- [ ] Test tren man hinh laptop.
+- [ ] Neu co thoi gian, test tren mobile hoac resize browser.
 
-- [ ] Kiem tra repo sach sau khi chay test.
+Mau bang:
 
-```powershell
-git status --short
-```
+| UI item | Ket qua | Ghi chu |
+|---|---|---|
+| Board khong vo layout | Dat/Chua dat | |
+| Click bi khoa khi AI dang nghi | Dat/Chua dat | |
+| Reason hien dung | Dat/Chua dat | |
+| Arena replay chay | Dat/Chua dat | |
 
-  - Khong commit `backend/gomoku_tt.pkl` neu chi thay doi do test.
-  - Khong commit `arena/data/*.jsonl` neu khong duoc yeu cau.
-  - Khong commit `frontend/dist`.
+### C4. Danh gia theo tieu chi cham diem
 
-### Dau ra can nop
+- [ ] Danh gia muc do phuc tap bai toan.
+- [ ] Danh gia chat luong phuong phap AI.
+- [ ] Danh gia chat luong he thong/demo.
+- [ ] Danh gia chat luong benchmark.
+- [ ] Danh gia diem manh.
+- [ ] Danh gia han che.
 
-- [ ] Ket qua cac lenh test/build.
-- [ ] Bang benchmark Easy/Medium/Hard.
-- [ ] Anh chup UI Play mode.
-- [ ] Anh chup UI Arena mode.
-- [ ] Danh sach loi da gap va cach sua.
-- [ ] 1 doan ngan cho report:
+Mau bang:
+
+| Tieu chi | Bang chung | Nhan xet |
+|---|---|---|
+| Do phuc tap bai toan | Gomoku 15x15, branching factor lon | |
+| Chat luong AI | Alpha-beta, heuristic, threat detection | |
+| Demo he thong | Vercel + Render | |
+| Benchmark | Bang Easy/Medium/Hard | |
+
+### C5. Viet noi dung cho report va slide
+
+- [ ] Viet 1 doan 5-7 cau ve benchmark/kiem thu.
+- [ ] Viet 1 bang benchmark cuoi cung.
+- [ ] Viet 3 nhan xet ket qua.
+- [ ] Viet 3 de xuat cai tien neu co them thoi gian.
+
+Doan mau co the sua:
 
 ```text
-Qua kiem thu, he thong co the build frontend thanh cong, backend/arena import duoc va AI phan hoi trong cac case demo chinh. Benchmark duoc dung de so sanh Easy/Medium/Hard theo thoi gian phan hoi, completed_depth va kha nang xu ly threat nhu thang ngay hoac chan doi thu thang. Ket qua cho thay muc Hard tim sau hon nhung co the cham hon, trong khi Medium phu hop hon cho demo tuong tac.
+Benchmark duoc dung de danh gia AI doc lap voi viec deploy. Cac case tap trung vao kha nang xu ly chien thuat Gomoku nhu thang ngay, chan doi thu thang va tao threat. Ket qua duoc so sanh giua Easy, Medium va Hard thong qua nuoc di duoc chon, reason, completed_depth va thoi gian phan hoi. Medium thuong phu hop cho demo tuong tac vi can bang giua toc do va chat luong, trong khi Hard co the tim sau hon nhung cham hon. Phan UI duoc kiem tra tren cac luong chinh nhu Play Vs AI, doi difficulty, reset va Arena Self-Play.
 ```
 
-### Phan thuyet trinh nen noi
+### Dau ra cua thanh vien C
 
-- [ ] Trinh bay bang benchmark ngan gon.
-- [ ] Noi ro benchmark doc lap voi deploy.
-- [ ] Giai thich Easy/Medium/Hard khac nhau o depth, candidate limit va time limit.
-- [ ] Demo UI online voi mot van choi that.
+- [ ] Bang ket qua test command.
+- [ ] Bang benchmark Easy/Medium/Hard.
+- [ ] Bang test UI.
+- [ ] It nhat 2 anh chup minh chung.
+- [ ] 1 doan report 5-7 cau.
+- [ ] 3-4 bullet cho slide.
 
 ## Checklist tong hop cho nguoi lam report
 
-Sau khi nhan ket qua tu 3 thanh vien, nguoi lam report tick cac muc sau:
+Nguoi lam report chi can tick khi da nhan du tu 3 thanh vien:
 
-- [ ] Da co link GitHub.
-- [ ] Da co link Vercel.
-- [ ] Da co link Render backend.
-- [ ] Da co link Render arena.
-- [ ] Da co anh chup app online.
-- [ ] Da co anh chup Swagger docs.
-- [ ] Da co bang giai thich thuat toan AI.
-- [ ] Da co 3 tactical demo cases.
-- [ ] Da co bang benchmark Easy/Medium/Hard.
-- [ ] Da co danh sach kho khan va cach khac phuc.
-- [ ] Da co huong phat trien tuong lai.
+- [ ] Tu thanh vien A: bang thuat toan AI.
+- [ ] Tu thanh vien A: 3 tactical demo cases.
+- [ ] Tu thanh vien A: doan report ve AI.
+- [ ] Tu thanh vien B: bang link deploy.
+- [ ] Tu thanh vien B: bang env/CORS.
+- [ ] Tu thanh vien B: doan report ve deploy.
+- [ ] Tu thanh vien C: bang benchmark.
+- [ ] Tu thanh vien C: bang test UI.
+- [ ] Tu thanh vien C: doan report ve danh gia.
+- [ ] Co anh chup minh chung tu ca 3 nguoi.
+- [ ] Co commit hash moi nhat sau khi cap nhat tai lieu.
 
-## Goi y chia phan trinh bay 15 phut
+## Kich ban thuyet trinh 15 phut can bang
 
-| Thoi luong | Nguoi trinh bay | Noi dung |
+| Thoi luong | Nguoi | Noi dung |
 |---:|---|---|
-| 2 phut | Nguoi lam report | Gioi thieu bai toan Gomoku/Caro 15x15 va muc tieu |
-| 4 phut | Thanh vien AI core | Giai thich thuat toan va evaluator |
-| 3 phut | Thanh vien Benchmark/UI | Benchmark, test va UI |
-| 3 phut | Thanh vien Deploy | Demo online Vercel/Render |
+| 2 phut | Nguoi lam report | Gioi thieu bai toan, muc tieu, tech stack |
+| 3 phut | Thanh vien A | AI core, minimax/alpha-beta, threat detection |
+| 3 phut | Thanh vien B | Deploy online, kien truc Vercel/Render, env/CORS |
+| 3 phut | Thanh vien C | Benchmark, UI test, danh gia Easy/Medium/Hard |
 | 2 phut | Nguoi lam report | Kho khan, han che, huong phat trien |
-| 1 phut | Ca nhom | Q&A va ket luan |
+| 2 phut | Ca nhom | Demo nhanh va Q&A |
 
 ## Tieu chi hoan thanh toi thieu
 
-- [ ] App online mo duoc bang link Vercel.
-- [ ] Backend health check tra ve `{"status":"ok"}`.
-- [ ] AI di duoc nuoc tren frontend online.
-- [ ] Co bang benchmark it nhat 2 case cho 3 difficulty.
-- [ ] Co giai thich thuat toan AI bang ngon ngu de hieu.
-- [ ] Co minh chung deploy va test de dua vao report.
+- [ ] Moi thanh vien co it nhat 1 bang ket qua.
+- [ ] Moi thanh vien co it nhat 2 minh chung.
+- [ ] Moi thanh vien co 1 doan report 5-7 cau.
+- [ ] Moi thanh vien co 3-4 bullet cho slide.
+- [ ] App online chay duoc.
+- [ ] AI co demo tactical case.
+- [ ] Benchmark co so sanh Easy/Medium/Hard.
 
 ## Tieu chi huong toi diem cao
 
-- [ ] Demo duoc AI thang ngay va AI chan thang ngay.
-- [ ] Giai thich duoc vi sao AI chon nuoc qua `reason`.
-- [ ] Co so sanh Easy/Medium/Hard bang so lieu.
-- [ ] Co noi ro he thong khong phai SOTA/RL, nhung co classical AI explainable.
-- [ ] Co deploy public that, khong chi nop source code.
-- [ ] Bao cao, slide va demo thong nhat voi nhau.
+- [ ] Report co bang chung ro rang, khong noi chung chung.
+- [ ] Demo online dung link public, khong phu thuoc localhost.
+- [ ] AI duoc giai thich bang reason/evaluation/completed_depth.
+- [ ] Benchmark doc lap voi deploy.
+- [ ] Co noi ro han che: chua SOTA, chua RL, chua full TSS/VCF.
+- [ ] Ca 3 thanh vien deu co phan noi ngang nhau trong thuyet trinh.

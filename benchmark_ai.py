@@ -52,6 +52,28 @@ def create_forcing_open_four_board() -> list[list[int]]:
     return board
 
 
+def create_ai_double_three_board() -> list[list[int]]:
+    board = empty_board()
+    board[7][6] = AI_STONE
+    board[7][8] = AI_STONE
+    board[6][7] = AI_STONE
+    board[8][7] = AI_STONE
+    board[5][5] = HUMAN_STONE
+    board[9][9] = HUMAN_STONE
+    return board
+
+
+def create_human_double_three_board() -> list[list[int]]:
+    board = empty_board()
+    board[7][6] = HUMAN_STONE
+    board[7][8] = HUMAN_STONE
+    board[6][7] = HUMAN_STONE
+    board[8][7] = HUMAN_STONE
+    board[5][5] = AI_STONE
+    board[9][9] = AI_STONE
+    return board
+
+
 def center_first_move(board: list[list[int]]) -> tuple[int, int] | None:
     center = BOARD_SIZE // 2
     if board[center][center] == EMPTY:
@@ -64,7 +86,36 @@ def center_first_move(board: list[list[int]]) -> tuple[int, int] | None:
     return None
 
 
-def run_center_baseline(case_name: str, board: list[list[int]]) -> dict:
+def normalize_expected_moves(expected_moves: list[tuple[int, int]]) -> list[list[int]]:
+    return [[row, col] for row, col in expected_moves]
+
+
+def is_correct_move(move: tuple[int, int] | None, expected_moves: list[tuple[int, int]]) -> bool | None:
+    if not expected_moves:
+        return None
+    return move in set(expected_moves)
+
+
+def summarize_accuracy(rows: list[dict]) -> dict[str, dict[str, float | int]]:
+    summary: dict[str, dict[str, float | int]] = {}
+    for row in rows:
+        if not row["expected_moves"]:
+            continue
+        agent = row["agent"]
+        if agent not in summary:
+            summary[agent] = {"correct": 0, "total": 0, "accuracy": 0.0}
+        summary[agent]["total"] += 1
+        if row["is_correct"]:
+            summary[agent]["correct"] += 1
+
+    for row in summary.values():
+        total = int(row["total"])
+        correct = int(row["correct"])
+        row["accuracy"] = round(correct / total, 3) if total else 0.0
+    return summary
+
+
+def run_center_baseline(case_name: str, board: list[list[int]], expected_moves: list[tuple[int, int]]) -> dict:
     start = time.perf_counter()
     move = center_first_move([row[:] for row in board])
     elapsed_ms = (time.perf_counter() - start) * 1000
@@ -72,6 +123,8 @@ def run_center_baseline(case_name: str, board: list[list[int]]) -> dict:
         "case": case_name,
         "agent": "center_first_baseline",
         "move": move,
+        "expected_moves": normalize_expected_moves(expected_moves),
+        "is_correct": is_correct_move(move, expected_moves),
         "score": 0,
         "reason": "center_or_nearest_empty",
         "completed_depth": 0,
@@ -79,7 +132,7 @@ def run_center_baseline(case_name: str, board: list[list[int]]) -> dict:
     }
 
 
-def run_project_ai(case_name: str, board: list[list[int]]) -> list[dict]:
+def run_project_ai(case_name: str, board: list[list[int]], expected_moves: list[tuple[int, int]]) -> list[dict]:
     rows: list[dict] = []
     for difficulty, config in DIFFICULTY_CONFIGS.items():
         ai = GomokuAI(
@@ -94,6 +147,8 @@ def run_project_ai(case_name: str, board: list[list[int]]) -> list[dict]:
                 "case": case_name,
                 "agent": f"project_{difficulty}",
                 "move": analysis.move,
+                "expected_moves": normalize_expected_moves(expected_moves),
+                "is_correct": is_correct_move(analysis.move, expected_moves),
                 "score": analysis.score,
                 "reason": analysis.reason,
                 "completed_depth": analysis.completed_depth,
@@ -104,28 +159,41 @@ def run_project_ai(case_name: str, board: list[list[int]]) -> list[dict]:
 
 
 def main() -> None:
-    cases = {
-        "opening": empty_board(),
-        "midgame": create_midgame_board(),
-        "block_open_four": create_block_open_four_board(),
-        "forcing_open_four": create_forcing_open_four_board(),
-    }
+    cases = [
+        {"name": "opening", "board": empty_board(), "expected_moves": [(7, 7)]},
+        {"name": "midgame", "board": create_midgame_board(), "expected_moves": []},
+        {"name": "block_open_four", "board": create_block_open_four_board(), "expected_moves": [(7, 4), (7, 9)]},
+        {"name": "forcing_open_four", "board": create_forcing_open_four_board(), "expected_moves": [(6, 4), (6, 8)]},
+        {"name": "create_double_three", "board": create_ai_double_three_board(), "expected_moves": [(7, 7)]},
+        {"name": "block_double_three", "board": create_human_double_three_board(), "expected_moves": [(7, 7)]},
+    ]
 
     results: list[dict] = []
-    for case_name, board in cases.items():
-        results.append(run_center_baseline(case_name, board))
-        results.extend(run_project_ai(case_name, board))
+    for case in cases:
+        case_name = case["name"]
+        board = case["board"]
+        expected_moves = case["expected_moves"]
+        results.append(run_center_baseline(case_name, board, expected_moves))
+        results.extend(run_project_ai(case_name, board, expected_moves))
+
+    output = {
+        "results": results,
+        "accuracy_by_agent": summarize_accuracy(results),
+    }
 
     output_path = ROOT_DIR / "benchmark_results.json"
-    output_path.write_text(json.dumps(results, ensure_ascii=False, indent=2), encoding="utf-8")
+    output_path.write_text(json.dumps(output, ensure_ascii=False, indent=2), encoding="utf-8")
 
-    print("Case | Agent | Move | Reason | Depth | Time ms")
-    print("--- | --- | --- | --- | ---: | ---:")
+    print("Case | Agent | Move | Correct | Reason | Depth | Time ms")
+    print("--- | --- | --- | --- | --- | ---: | ---:")
     for row in results:
         print(
-            f"{row['case']} | {row['agent']} | {row['move']} | {row['reason']} | "
+            f"{row['case']} | {row['agent']} | {row['move']} | {row['is_correct']} | {row['reason']} | "
             f"{row['completed_depth']} | {row['elapsed_ms']}"
         )
+    print("Accuracy by agent:")
+    for agent, summary in output["accuracy_by_agent"].items():
+        print(f"{agent}: {summary['correct']}/{summary['total']} ({summary['accuracy']})")
     print(f"Saved benchmark results to {output_path}")
 
 

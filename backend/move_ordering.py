@@ -171,7 +171,7 @@ class MoveOrdering:
                 if has_winner(board, player, self.board_size):
                     return True
                 summary = self.threat_detector.move_summary(board, row, col, player)
-                if summary.open_four or summary.closed_four:
+                if summary.open_four or summary.closed_four or summary.open_three >= 2:
                     return True
             finally:
                 board[row][col] = EMPTY

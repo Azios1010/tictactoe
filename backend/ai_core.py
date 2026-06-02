@@ -175,6 +175,24 @@ class GomokuAI:
                 completed_depth=0,
             )
 
+        blocking_double_threat = self._find_double_open_three_move(board, HUMAN_STONE, candidates)
+        if blocking_double_threat is not None:
+            return MoveAnalysis(
+                move=blocking_double_threat,
+                score=float(self._score_move(board, blocking_double_threat[0], blocking_double_threat[1])),
+                reason="blocking_double_threat",
+                completed_depth=0,
+            )
+
+        creating_double_threat = self._find_double_open_three_move(board, AI_STONE, candidates)
+        if creating_double_threat is not None:
+            return MoveAnalysis(
+                move=creating_double_threat,
+                score=float(self._score_move(board, creating_double_threat[0], creating_double_threat[1])),
+                reason="creating_double_threat",
+                completed_depth=0,
+            )
+
         deadline = self._search_deadline()
         try:
             forcing_move = self._find_forcing_win(
@@ -454,6 +472,25 @@ class GomokuAI:
             board[row][col] = EMPTY
             if has_winner_for_player:
                 return (row, col)
+        return None
+
+    def _find_double_open_three_move(
+        self,
+        board: list[list[int]],
+        player: int,
+        candidates: Iterable[tuple[int, int]] | None = None,
+    ) -> tuple[int, int] | None:
+        search_space = candidates if candidates is not None else self._empty_cells(board)
+        for row, col in search_space:
+            if board[row][col] != EMPTY:
+                continue
+            board[row][col] = player
+            try:
+                summary = self._move_threat_summary(board, row, col, player)
+                if summary.open_three >= 2:
+                    return (row, col)
+            finally:
+                board[row][col] = EMPTY
         return None
 
     def _find_forcing_win(

@@ -39,6 +39,16 @@
 \newcommand{\projectname}{Gomoku AI 15x15}
 \newcommand{\repoURL}{\url{https://github.com/Azios1010/tictactoe}}
 \newcommand{\todo}[1]{\textcolor{red!70!black}{[#1]}}
+\newcommand{\fillplaceholder}[2]{
+  \par\medskip
+  \noindent\fbox{
+    \begin{minipage}{0.94\linewidth}
+      \textbf{#1}\\[0.35em]
+      #2
+    \end{minipage}
+  }
+  \par\medskip
+}
 
 \title{\textbf{\projectname}\\
 \large Một hệ thống AI cổ điển có thể giải thích cho bài toán Gomoku/Caro 15x15}
@@ -94,6 +104,26 @@ Khó khăn và cách vượt qua & Mục \ref{sec:difficulties}. \\
 Kết luận và hướng phát triển & Mục \ref{sec:conclusion}. \\
 \bottomrule
 \end{longtable}
+
+\subsection{Các phần cần thành viên tự hoàn thiện}
+
+Bản LaTeX này là khung báo cáo chung. Các phần mô tả kiến trúc, phương pháp và yêu cầu nộp đã được viết sẵn để đảm bảo báo cáo có cấu trúc đầy đủ. Tuy nhiên, các bằng chứng thực nghiệm và phần đóng góp cá nhân cần được thành viên phụ trách tự điền để báo cáo phản ánh đúng công việc của nhóm.
+
+\begin{longtable}{p{0.18\textwidth}p{0.34\textwidth}p{0.38\textwidth}}
+\toprule
+\textbf{Người phụ trách} & \textbf{Phần cần điền} & \textbf{Đầu ra bắt buộc} \\
+\midrule
+Người 1 & AI core và tactical demo & Bảng tactical cases, ảnh minh chứng, giải thích 3 reason quan trọng, nhận xét giới hạn AI. \\
+Người 2 & Deploy và API validation & Link public, bảng env/CORS, bảng API contract, latency online. \\
+Người 3 & Benchmark, kiểm thử và UI & Bảng benchmark cuối cùng, kết quả build/test, ảnh UI Play/Arena, nhận xét Easy/Medium/Hard. \\
+\bottomrule
+\end{longtable}
+
+\fillplaceholder{Checklist cho Người 1}
+{Điền các phần có nhãn ``Người 1 cần bổ sung''. Không chỉ chép lại thuật toán; cần có bằng chứng từ app/API: board setup, nước AI chọn, reason, evaluation, completed depth và ít nhất 2 ảnh hoặc response Swagger.}
+
+\fillplaceholder{Checklist cho Người 3}
+{Điền các phần có nhãn ``Người 3 cần bổ sung''. Cần chạy lại benchmark/build/test nếu có thể, thay bảng số liệu tạm bằng số liệu cuối cùng, thêm ảnh UI Play Vs AI và Arena, sau đó viết nhận xét khách quan về Easy/Medium/Hard.}
 
 \section{Giới thiệu bài toán}
 \label{sec:problem}
@@ -209,6 +239,9 @@ Dự án không đặt mục tiêu vượt các engine Gomoku cấp thi đấu. 
   \item Zobrist hashing và transposition table để giảm tính toán lặp.
 \end{itemize}
 
+\fillplaceholder{Người 1 cần bổ sung: tóm tắt AI theo cách hiểu cá nhân}
+{Viết thêm 1 đoạn 5--7 câu ngay sau khung này: AI nhận board như thế nào, vì sao phải có candidate pruning, khi nào AI trả \texttt{winning\_move}/\texttt{blocking\_win}, và ý nghĩa của \texttt{reason}, \texttt{evaluation}, \texttt{completed\_depth}. Đoạn này nên viết bằng lời của người thuyết trình, không cần quá học thuật.}
+
 \subsection{Candidate move generation}
 
 Trên bàn 15x15, xét toàn bộ ô trống là quá tốn kém. Vì vậy, AI chỉ sinh các nước ứng viên quanh các quân đã đánh, trong bán kính được cấu hình bởi \texttt{candidate\_radius}. Cách này dựa trên quan sát thực tế: các nước có ý nghĩa chiến thuật thường nằm gần vùng đang tranh chấp. Sau khi sinh ứng viên, engine giới hạn số nước bằng \texttt{candidate\_limit}. Đây là bước quan trọng để giảm branching factor trước khi minimax bắt đầu.
@@ -262,6 +295,31 @@ Zobrist hashing ánh xạ board thành một khóa hash. Transposition table lư
 \subsection{Forcing search giới hạn}
 
 Dự án đã có cơ chế threat extension và forcing search ở mức giới hạn để ưu tiên các chuỗi nước ép buộc ngắn. Phần này giúp AI xử lý tốt hơn một số tình huống tạo open-four hoặc phản ứng với threat nguy hiểm. Tuy nhiên, cần nhấn mạnh rằng đây chưa phải full Threat Space Search hoặc full VCF solver theo chuẩn engine Gomoku chuyên nghiệp.
+
+\subsection{Minh chứng tactical demo do Người 1 bổ sung}
+
+Phần này để người phụ trách AI điền bằng chứng thực tế từ frontend hoặc Swagger. Mỗi case nên có board setup, nước AI chọn và reason trả về. Nếu có ảnh, lưu ảnh vào thư mục \texttt{docs/report\_images/} hoặc ghi link ảnh trong bảng.
+
+\fillplaceholder{Người 1 cần bổ sung: bảng tactical demo}
+{Thay các ô \todo{...} trong bảng dưới bằng kết quả thật. Tối thiểu cần 3 case: AI thắng ngay, AI chặn người chơi thắng, AI tạo threat/open-four/double-threat.}
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabularx}{\textwidth}{p{0.15\textwidth}X p{0.14\textwidth}p{0.15\textwidth}p{0.16\textwidth}}
+\toprule
+\textbf{Case} & \textbf{Board setup / cách tái hiện} & \textbf{Difficulty} & \textbf{AI move} & \textbf{Reason} \\
+\midrule
+AI thắng ngay & \todo{Mô tả 4 quân AI liên tiếp và ô thắng} & \todo{Medium} & \todo{[r,c]} & \todo{winning\_move} \\
+AI chặn thắng & \todo{Mô tả 4 quân người chơi liên tiếp} & \todo{Medium} & \todo{[r,c]} & \todo{blocking\_win} \\
+AI tạo threat & \todo{Mô tả thế tạo open-four/double-threat} & \todo{Medium/Hard} & \todo{[r,c]} & \todo{creating\_open\_four hoặc creating\_double\_threat} \\
+\bottomrule
+\end{tabularx}
+\caption{Bảng tactical demo cần Người 1 hoàn thiện bằng kết quả thực tế.}
+\end{table}
+
+\fillplaceholder{Người 1 cần bổ sung: nhận xét}
+{Viết 3--5 câu giải thích: case nào thể hiện immediate win/block, case nào thể hiện threat-aware evaluation, và case nào AI còn hạn chế hoặc cần cải thiện. Nếu AI chọn \texttt{best\_search\_score} thay vì reason chiến thuật rõ ràng, cần giải thích đây là kết quả của search/evaluator.}
 
 \section{Chức năng chính}
 
@@ -360,6 +418,25 @@ Dự án khai thác các phương pháp AI cổ điển đã biết: minimax, al
 \section{Thực nghiệm và đánh giá}
 \label{sec:experiments}
 
+\fillplaceholder{Người 3 cần bổ sung: quy trình chạy thực nghiệm}
+{Trước khi nộp, chạy lại các lệnh build/test/benchmark nếu có thể. Ghi ngày chạy, máy hoặc môi trường chạy, commit hash, và liệu benchmark chạy local hay trên API deploy. Nếu dùng lại \texttt{benchmark\_results.json} hiện có thì ghi rõ đây là benchmark nội bộ đã có trong repo.}
+
+\begin{table}[H]
+\centering
+\begin{tabularx}{\textwidth}{p{0.23\textwidth}p{0.18\textwidth}X}
+\toprule
+\textbf{Hạng mục kiểm tra} & \textbf{Kết quả} & \textbf{Ghi chú / bằng chứng} \\
+\midrule
+Python compile check & \todo{PASS/FAIL} & \todo{Điền lệnh đã chạy và ảnh/log nếu có} \\
+Frontend build & \todo{PASS/FAIL} & \todo{Điền thời gian hoặc output chính} \\
+Arena smoke test & \todo{PASS/FAIL} & \todo{Điền số game/samples} \\
+UI Play Vs AI & \todo{PASS/FAIL} & \todo{Điền ảnh minh chứng} \\
+UI Arena Self-Play & \todo{PASS/FAIL} & \todo{Điền ảnh minh chứng} \\
+\bottomrule
+\end{tabularx}
+\caption{Bảng kiểm thử cần Người 3 hoàn thiện trước khi nộp.}
+\end{table}
+
 \subsection{Thiết kế benchmark}
 
 Benchmark được chạy bằng file \texttt{benchmark\_ai.py}, kết quả lưu tại \texttt{benchmark\_results.json}. Bộ benchmark so sánh AI của dự án với một số baseline nội bộ:
@@ -373,6 +450,16 @@ Benchmark được chạy bằng file \texttt{benchmark\_ai.py}, kết quả lư
 \end{itemize}
 
 Các case tập trung vào yêu cầu chiến thuật cơ bản: khai cuộc trung tâm, AI thắng ngay theo hàng ngang/chéo, chặn open-four, chặn broken-four và các threat cơ bản. Đây là benchmark nội bộ, chưa phải so sánh với engine ngoài hoặc SOTA.
+
+\fillplaceholder{Người 3 cần bổ sung: thông tin benchmark cuối cùng}
+{Điền thêm ngày chạy benchmark, commit hash, môi trường chạy và lệnh chạy. Nếu số liệu mới khác bảng bên dưới, thay bảng accuracy và bảng case tiêu biểu bằng kết quả mới.}
+
+\begin{itemize}[leftmargin=*]
+  \item \textbf{Ngày chạy benchmark:} \todo{Điền ngày}.
+  \item \textbf{Commit hash:} \todo{Điền commit}.
+  \item \textbf{Môi trường chạy:} \todo{Local/Render/API deploy, cấu hình máy nếu có}.
+  \item \textbf{Lệnh chạy:} \todo{Ví dụ: \texttt{.\textbackslash backend\textbackslash venv\textbackslash Scripts\textbackslash python.exe benchmark\_ai.py}}.
+\end{itemize}
 
 \subsection{Độ chính xác theo agent}
 
@@ -420,6 +507,30 @@ diagonal\_win & project\_hard & [8,8] & winning\_move & 0 & 17.50 ms \\
 \end{table}
 
 Các case có \texttt{completed\_depth=0} không có nghĩa AI không hoạt động. Với các tình huống thắng ngay hoặc khai cuộc, engine có luật xử lý nhanh trước search sâu, vì vậy có thể trả kết quả ngay với \texttt{reason} rõ ràng.
+
+\fillplaceholder{Người 3 cần bổ sung: benchmark Easy/Medium/Hard cuối cùng}
+{Bảng trên là số liệu tạm từ file hiện có. Người 3 cần xác nhận hoặc thay bằng bảng cuối cùng gồm ít nhất 2 case cho 3 difficulty: immediate win và immediate block. Nếu có thời gian, thêm broken-four hoặc open-four.}
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabularx}{\textwidth}{p{0.14\textwidth}p{0.18\textwidth}p{0.14\textwidth}p{0.2\textwidth}r r p{0.11\textwidth}}
+\toprule
+\textbf{Difficulty} & \textbf{Case} & \textbf{Move} & \textbf{Reason} & \textbf{Depth} & \textbf{Time} & \textbf{Đúng?} \\
+\midrule
+Easy & Immediate win & \todo{[r,c]} & \todo{winning\_move} & \todo{0} & \todo{ms} & \todo{Có} \\
+Easy & Immediate block & \todo{[r,c]} & \todo{blocking\_win} & \todo{0} & \todo{ms} & \todo{Có} \\
+Medium & Immediate win & \todo{[r,c]} & \todo{winning\_move} & \todo{0} & \todo{ms} & \todo{Có} \\
+Medium & Immediate block & \todo{[r,c]} & \todo{blocking\_win} & \todo{0} & \todo{ms} & \todo{Có} \\
+Hard & Immediate win & \todo{[r,c]} & \todo{winning\_move} & \todo{0} & \todo{ms} & \todo{Có} \\
+Hard & Immediate block & \todo{[r,c]} & \todo{blocking\_win} & \todo{0} & \todo{ms} & \todo{Có} \\
+\bottomrule
+\end{tabularx}
+\caption{Bảng benchmark cuối cùng cần Người 3 hoàn thiện.}
+\end{table}
+
+\fillplaceholder{Người 3 cần bổ sung: nhận xét benchmark/UI}
+{Viết 5--7 câu trả lời các ý sau: Easy/Medium/Hard khác nhau thế nào về thời gian và completed depth; Medium có phù hợp demo hơn Hard không; UI có hiển thị đủ reason/evaluation/completed depth không; Arena replay có chạy ổn không; benchmark này độc lập với deploy như thế nào.}
 
 \subsection{Đánh giá theo tiêu chí chấm}
 

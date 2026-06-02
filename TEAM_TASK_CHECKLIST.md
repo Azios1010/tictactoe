@@ -33,7 +33,7 @@ Nguoi lam report se tong hop ket qua tu file nay vao `REPORT_BTL.md`, slide va k
 | Thanh vien | Vai tro chinh | Phan ky thuat | Phan minh chung | Phan report | Phan thuyet trinh |
 |---|---|---|---|---|---|
 | A | AI va tactical demo | Giai thich AI core, tao case demo | Anh/case AI chon nuoc | Phuong phap AI | 3-4 phut |
-| B | Deploy va tich hop he thong | Vercel, Render, env, CORS | Link online, health check, docs | Kien truc deploy | 3-4 phut |
+| B | Tich hop he thong, deploy va API validation | Vercel, Render, env, CORS, API smoke test | Link online, health check, docs, latency | Kien truc deploy va do tin cay | 3-4 phut |
 | C | Benchmark, UI va danh gia | Build/test, benchmark, UI test | Bang benchmark, anh UI | Danh gia ket qua | 3-4 phut |
 
 ## Thanh vien A: AI core va tactical demo
@@ -121,13 +121,13 @@ AI cua du an la classical Gomoku engine, khong dung reinforcement learning hay n
 - [ ] 1 doan report 5-7 cau.
 - [ ] 3-4 bullet cho slide.
 
-## Thanh vien B: Deploy, tich hop va van hanh online
+## Thanh vien B: Tich hop he thong, deploy va API validation
 
 ### Muc tieu
 
-Chung minh he thong full-stack chay duoc tren internet, frontend va backend tach rieng, cau hinh dung env, CORS va health check.
+Chung minh he thong full-stack chay duoc tren internet, frontend/backend/arena tich hop dung, API tra du lieu hop le, env/CORS duoc cau hinh dung, va co so lieu khach quan ve do on dinh khi demo online.
 
-### B1. Kiem tra GitHub va cau hinh deploy
+### B1. Kiem tra kien truc deploy va cau hinh repository
 
 - [ ] Kiem tra GitHub da co commit moi nhat.
 - [ ] Kiem tra file `render.yaml`.
@@ -135,6 +135,8 @@ Chung minh he thong full-stack chay duoc tren internet, frontend va backend tach
 - [ ] Kiem tra `frontend/.env.example`.
 - [ ] Kiem tra `backend/.env.example`.
 - [ ] Ghi lai commit hash moi nhat.
+- [ ] Ve hoac mo ta so do kien truc Vercel -> Render backend/arena.
+- [ ] Giai thich vi sao frontend va backend tach rieng khi deploy.
 
 Mau bang:
 
@@ -143,7 +145,7 @@ Mau bang:
 | GitHub co `render.yaml` | Dat/Chua dat | Link file |
 | GitHub co `DEPLOYMENT.md` | Dat/Chua dat | Link file |
 
-### B2. Kiem tra Render backend va arena
+### B2. Kiem tra Render backend, arena va Swagger contract
 
 - [ ] Mo backend `/api/health`.
 - [ ] Mo backend `/docs`.
@@ -151,6 +153,9 @@ Mau bang:
 - [ ] Mo arena `/docs`.
 - [ ] Chup anh 2 health checks.
 - [ ] Chup anh 2 Swagger docs hoac ghi link.
+- [ ] Doc Swagger cua `POST /api/get-move`.
+- [ ] Doc Swagger cua `POST /arena/api/self-play`.
+- [ ] Ghi lai request/response field quan trong cua moi API.
 
 Ket qua health mong doi:
 
@@ -158,7 +163,14 @@ Ket qua health mong doi:
 {"status":"ok"}
 ```
 
-### B3. Kiem tra Vercel env va luong API
+Mau bang API contract:
+
+| API | Method | Input quan trong | Output quan trong | Muc dich |
+|---|---|---|---|---|
+| `/api/get-move` | POST | board, player, difficulty | row, col, reason, evaluation, completed_depth | AI chon nuoc |
+| `/arena/api/self-play` | POST | games, save_to_disk | samples, wins/draws, latest_game | AI tu dau |
+
+### B3. Kiem tra Vercel env, Render CORS va luong API
 
 - [ ] Kiem tra Vercel co `VITE_API_BASE_URL`.
 - [ ] Kiem tra Vercel co `VITE_ARENA_API_BASE_URL`.
@@ -166,6 +178,8 @@ Ket qua health mong doi:
 - [ ] Kiem tra Render arena co `FRONTEND_ORIGINS`.
 - [ ] Dam bao value khong co dau `/` cuoi URL.
 - [ ] Sau khi sua env, redeploy frontend neu can.
+- [ ] Giai thich `VITE_` prefix giup Vite expose bien moi truong cho frontend.
+- [ ] Giai thich CORS ngan frontend domain la neu sai se bi loi request tren browser.
 
 Mau cau hinh:
 
@@ -175,41 +189,79 @@ VITE_ARENA_API_BASE_URL=https://<render-arena-url>
 FRONTEND_ORIGINS=https://<vercel-frontend-url>
 ```
 
-### B4. Test demo online
+### B4. API smoke test va do latency online
+
+- [ ] Goi `GET /api/health` 3 lan va ghi thoi gian phan hoi.
+- [ ] Goi `GET /arena/api/health` 3 lan va ghi thoi gian phan hoi.
+- [ ] Goi `POST /api/get-move` voi board mau va ghi response.
+- [ ] Goi `POST /arena/api/self-play` voi `games=1`, `save_to_disk=false` va ghi response.
+- [ ] Kiem tra response `get-move` co `row`, `col`, `reason`, `evaluation`, `completed_depth`.
+- [ ] Kiem tra response arena co `games`, `samples`, `latest_game`, `config`.
+- [ ] Ghi lai neu request dau tien cham do Render warm up.
+
+Co the test bang Swagger `/docs`, Postman, curl hoac PowerShell. Neu dung PowerShell, co the dung mau:
+
+```powershell
+$body = @{
+  board = @(0..14 | ForEach-Object { @(0..14 | ForEach-Object { 0 }) })
+  player = 1
+  difficulty = "medium"
+} | ConvertTo-Json -Depth 5
+
+Measure-Command {
+  Invoke-RestMethod -Uri "https://<render-backend-url>/api/get-move" -Method Post -ContentType "application/json" -Body $body
+}
+```
+
+Mau bang:
+
+| Endpoint | Lan 1 (ms) | Lan 2 (ms) | Lan 3 (ms) | Nhan xet |
+|---|---:|---:|---:|---|
+| Backend health | | | | |
+| Arena health | | | | |
+| Get move Medium | | | | |
+| Arena self-play 1 game | | | | |
+
+### B5. Test demo online va danh gia rui ro van hanh
 
 - [ ] Mo link Vercel.
 - [ ] Choi mot nuoc tren Easy.
 - [ ] Choi mot nuoc tren Medium.
 - [ ] Chuyen sang Arena va bam `Run arena`.
-- [ ] Ghi lai neu request dau tien cham do Render warm up.
 - [ ] Chup anh app online sau khi AI da di nuoc.
+- [ ] Chup anh Arena replay hoac summary.
+- [ ] Lap bang loi/rui ro van hanh va cach xu ly.
 
-Mau bang:
+Mau bang rui ro:
 
-| Tinh nang online | Ket qua | Ghi chu |
+| Rui ro | Dau hieu | Cach xu ly |
 |---|---|---|
-| Play Vs AI Easy | Dat/Chua dat | |
-| Play Vs AI Medium | Dat/Chua dat | |
-| Arena self-play | Dat/Chua dat | |
+| Sai env Vercel | Frontend bao backend unreachable | Sua `VITE_API_BASE_URL`, redeploy |
+| Sai CORS Render | Browser chan request | Sua `FRONTEND_ORIGINS`, redeploy |
+| Render cold start | Request dau tien cham | Mo backend truoc khi demo |
+| Hard AI cham | UI phan hoi lau | Demo Medium neu may yeu |
 
-### B5. Viet noi dung cho report va slide
+### B6. Viet noi dung cho report va slide
 
 - [ ] Viet 1 doan 5-7 cau ve kien truc deploy.
 - [ ] Viet 1 bang link he thong.
 - [ ] Viet 3 loi deploy thuong gap va cach sua.
 - [ ] Viet 3 bullet ve loi ich cua deploy online so voi chi nop source.
+- [ ] Viet 3 nhan xet dua tren bang latency/API smoke test.
 
 Doan mau co the sua:
 
 ```text
-He thong duoc deploy public voi frontend React/Vite tren Vercel va hai FastAPI service tren Render. Frontend khong hard-code URL backend ma doc qua cac bien moi truong VITE_API_BASE_URL va VITE_ARENA_API_BASE_URL. Backend va arena doc FRONTEND_ORIGINS de cau hinh CORS, giup chi domain frontend duoc phep goi API sau khi deploy on dinh. Render cung cap health check cho tung service, con Vercel phuc vu giao dien web. Cach trien khai nay chung minh du an khong chi chay local ma co the demo truc tiep qua internet.
+He thong duoc deploy public voi frontend React/Vite tren Vercel va hai FastAPI service tren Render. Frontend khong hard-code URL backend ma doc qua cac bien moi truong VITE_API_BASE_URL va VITE_ARENA_API_BASE_URL. Backend va arena doc FRONTEND_ORIGINS de cau hinh CORS, giup chi domain frontend duoc phep goi API sau khi deploy on dinh. Ngoai viec kiem tra health check, nhom con kiem tra request/response cua API get-move va arena self-play de dam bao tich hop dung contract. Bang latency online duoc dung de danh gia tinh on dinh khi demo, trong do can luu y Render co the cham o request dau tien do cold start. Cach trien khai nay chung minh du an khong chi chay local ma co the demo truc tiep qua internet.
 ```
 
 ### Dau ra cua thanh vien B
 
 - [ ] Bang link he thong.
 - [ ] Bang cau hinh env.
-- [ ] Bang test online.
+- [ ] Bang API contract.
+- [ ] Bang latency/API smoke test.
+- [ ] Bang test online va rui ro van hanh.
 - [ ] It nhat 2 anh chup minh chung.
 - [ ] 1 doan report 5-7 cau.
 - [ ] 3-4 bullet cho slide.
@@ -338,7 +390,7 @@ Nguoi lam report chi can tick khi da nhan du tu 3 thanh vien:
 |---:|---|---|
 | 2 phut | Nguoi lam report | Gioi thieu bai toan, muc tieu, tech stack |
 | 3 phut | Thanh vien A | AI core, minimax/alpha-beta, threat detection |
-| 3 phut | Thanh vien B | Deploy online, kien truc Vercel/Render, env/CORS |
+| 3 phut | Thanh vien B | Tich hop online, API validation, Vercel/Render, env/CORS |
 | 3 phut | Thanh vien C | Benchmark, UI test, danh gia Easy/Medium/Hard |
 | 2 phut | Nguoi lam report | Kho khan, han che, huong phat trien |
 | 2 phut | Ca nhom | Demo nhanh va Q&A |

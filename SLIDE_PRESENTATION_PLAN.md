@@ -1,78 +1,116 @@
-# Noi dung chi tiet slide thuyet trinh Gomoku AI
+# Ke Hoach Slide Thuyet Trinh Gomoku/Caro 15x15 AI
 
-Muc tieu: tao slide 15 phut, bam sat bao cao `REPORT_BTL.tex`, co phan noi can bang cho cac thanh vien va co cho dien minh chung that tu deploy/benchmark/UI.
+Muc tieu: tao bai thuyet trinh 15 phut co cau chuyen ro rang:
+
+1. Bai toan Gomoku 15x15 co khong gian tim kiem lon.
+2. Thuat toan chinh la classical search engine co the giai thich.
+3. CNN consultant model la phan mo rong hoc giam sat, dung lam advisor va policy prior.
+4. Ket qua duoc danh gia bang benchmark tactical, metric model va A/B benchmark.
+5. Ket luan trung thuc: AI da cai thien ve pipeline va kha nang giai thich, nhung chua claim SOTA hay manh hon Rapfi/Yixin.
 
 Tong thoi luong de xuat: 15 phut trinh bay + Q&A.
 
-## Phan cong noi
+## Phan Cong Noi
 
 | Nguoi | Thoi luong | Slide chinh | Vai tro |
 |---|---:|---|---|
-| Nguoi lam report | 3-4 phut | 1, 2, 11, 12 | Gioi thieu, tong hop, ket luan |
-| Thanh vien 1 | 3-4 phut | 3, 4, 5 | AI core va tactical demo |
-| Thanh vien 2 | 3-4 phut | 6, 7 | Deploy, API validation, system integration |
-| Thanh vien 3 | 3-4 phut | 8, 9, 10 | Benchmark, UI test, danh gia |
+| Nguoi mo dau/report | 2.5 phut | 1, 2, 13 | Bai toan, muc tieu, ket luan |
+| Thanh vien A | 4 phut | 3, 4, 5 | AI core, threat detection, search |
+| Thanh vien B | 4 phut | 6, 7, 8 | Data, Kaggle training, CNN consultant |
+| Thanh vien C | 4.5 phut | 9, 10, 11, 12 | Benchmark, A/B, system, demo |
 
-## Slide 1: Tieu de va thong tin nhom
+## Thong Diep Chinh Can Giu
+
+- Project khong phai tic-tac-toe 3x3; day la Gomoku/Caro 15x15.
+- AI chinh van la classical engine: minimax, alpha-beta, iterative deepening, heuristic evaluator, threat detection.
+- CNN model khong tu thay AI chinh; model chi goi y top moves va them policy prior cho move ordering.
+- Model co ket qua tot hon baseline, nhung top-1 40.244% chua du de claim model tu choi toi uu.
+- A/B benchmark cho thay hybrid khong pha tactical rules, nhung chua co bang chung latency/playing strength tang ro ret.
+- Khong claim SOTA, khong claim manh hon Rapfi/Yixin, khong claim full TSS/VCF solver.
+
+## Slide 1: Tieu De Va Mo Ta Ngan
 
 **Tieu de:** Gomoku/Caro 15x15 AI
 
 **Noi dung tren slide:**
 
-- Ten du an: Gomoku AI 15x15.
-- Bai toan: nguoi choi vs AI tren board 15x15.
-- Huong tiep can: classical game AI, explainable search.
-- Tech stack: React/Vite, FastAPI, Python AI engine.
-- Link GitHub: `https://github.com/Azios1010/tictactoe`.
-- Link demo: `[dien link Vercel]`.
+- Game doi khang tren board 15x15.
+- AI chinh: classical game search.
+- Mo rong: supervised CNN consultant model.
+- Tech stack: React/Vite, FastAPI, Python AI core, Kaggle training.
+- GitHub: `https://github.com/Azios1010/tictactoe`.
+- Demo: `[dien link Vercel/Render neu co]`.
 
-**Nguoi noi:** Nguoi lam report.
+**Loi noi goi y:**
 
-**Loi thoai goi y:**
+> Nhom em xay dung he thong choi Gomoku/Caro 15x15. Diem chinh cua du an la engine AI co the giai thich bang reason, evaluation va completed_depth. Sau do nhom mo rong them CNN consultant model de goi y nuoc di va ho tro sap xep candidate.
 
-> Nhom em xay dung mot he thong choi Gomoku/Caro 15x15 giua nguoi choi va AI. Trong du an nay, trong tam khong phai la web app don thuan ma la mot AI engine theo huong classical search, co the giai thich duoc ly do chon nuoc di. He thong co frontend React/Vite, backend FastAPI va da duoc deploy public de demo truc tiep.
+**Minh chung can co:** anh man hinh app, QR/link GitHub.
 
-**Minh chung can co:**
-
-- Anh chup trang app online.
-- QR/link GitHub hoac Vercel neu muon.
-
-## Slide 2: Bai toan va muc tieu
-
-**Tieu de:** Bai toan Gomoku/Caro 15x15
+## Slide 2: Bai Toan Va Thach Thuc
 
 **Noi dung tren slide:**
 
-- Board 15x15, hai ben lan luot dat quan.
-- Thang khi co 5 quan lien tiep theo ngang/doc/cheo.
-- Quy uoc engine:
-  - `0`: o trong.
-  - `1`: AI/O.
-  - `-1`: nguoi choi/X.
-- Thach thuc: branching factor lon, toi da 225 nuoc hop le dau game.
-- Muc tieu: AI danh hop ly, phan hoi nhanh, giai thich duoc reason.
+- Muc tieu: dat 5 quan lien tiep tren hang/doc/cheo.
+- Board 15x15 co toi da 225 o trong luc dau game.
+- Minimax thuong gap branching factor rat lon.
+- AI can vua danh hop ly, vua phan hoi nhanh.
+- Can giai thich duoc quyet dinh, khong chi tra ve move.
 
-**Nguoi noi:** Nguoi lam report.
+**Quy uoc board:**
 
-**Loi thoai goi y:**
+| Gia tri | Y nghia |
+|---:|---|
+| `0` | O trong |
+| `1` | AI/O/black |
+| `-1` | Nguoi choi/X/white |
 
-> Gomoku 15x15 co khong gian trang thai lon hon rat nhieu so voi tic-tac-toe 3x3. Neu moi luot deu xet tat ca o trong thi minimax se no nhanh theo ham mu. Vi vay muc tieu cua nhom la ket hop search voi tri thuc Gomoku, de AI vua danh duoc trong thoi gian ngan vua tra ve ly do nhu winning_move, blocking_win hay creating_open_four.
+**Loi noi goi y:**
 
-**Hinh anh goi y:**
+> Neu xet het tat ca o trong, search tree tang theo ham mu. Vi vay, bai toan khong nam o viec viet minimax don gian, ma nam o viec giam nhanh, sap xep nuoc di va dua tri thuc Gomoku vao evaluator.
 
-- Mot hinh board 15x15.
-- Mot icon/diagram 5 quan lien tiep.
+## Slide 3: Kien Truc He Thong
 
-## Slide 3: Kien truc AI core
+**Noi dung tren slide:**
 
-**Tieu de:** AI core pipeline
+```text
+React/Vite Frontend
+  -> POST /api/get-move
+  -> FastAPI Backend
+      -> GomokuAI classical engine
+      -> Consultant CNN advisor
+
+React/Vite Frontend
+  -> Arena service
+      -> Self-play JSONL data
+```
+
+**Thanh phan chinh:**
+
+| File/thu muc | Vai tro |
+|---|---|
+| `backend/ai_core.py` | Search orchestration |
+| `backend/threats.py` | Threat detection |
+| `backend/evaluator.py` | Heuristic evaluation |
+| `backend/move_ordering.py` | Candidate + ordering + policy prior |
+| `dl/model.py` | CNN policy-value network |
+| `dl/predict_policy.py` | Inference wrapper |
+| `arena/` | Self-play va data generation |
+
+**Loi noi goi y:**
+
+> Frontend chi hien thi va gui board. Backend validate request, chon difficulty, goi AI core va tra ve row, col, reason, evaluation, completed_depth. Consultant model la module phu, khong thay the engine chinh.
+
+## Slide 4: AI Core Pipeline
 
 **Noi dung tren slide:**
 
 ```text
 Board
--> Validate / Normalize
--> Immediate win/block
+-> Validate / normalize
+-> Immediate win
+-> Immediate block
+-> Double-threat / forcing checks
 -> Candidate generation
 -> Move ordering
 -> Iterative deepening
@@ -81,404 +119,304 @@ Board
 -> MoveAnalysis
 ```
 
-**Cac file lien quan:**
+**Y can nhan manh:**
 
-- `backend/ai_core.py`
-- `backend/ai_types.py`
-- `backend/board_rules.py`
-- `backend/threats.py`
-- `backend/evaluator.py`
-- `backend/move_ordering.py`
+- Tactical rules chay truoc search sau.
+- Search chi xet candidate gan vung da co quan.
+- MoveAnalysis giup giai thich vi sao AI di nuoc do.
 
-**Nguoi noi:** Thanh vien 1.
+**Loi noi goi y:**
 
-**Loi thoai goi y:**
+> Engine khong dua tat ca o trong vao minimax. Truoc tien AI xu ly nhung nuoc bat buoc nhu thang ngay va chan thang. Neu khong co nuoc bat buoc, AI moi search tren danh sach candidate da duoc sap xep.
 
-> Day la luong xu ly chinh cua AI. Truoc khi search sau, AI kiem tra cac truong hop chien thuat mot buoc nhu thang ngay hoac chan doi thu thang. Sau do engine sinh cac nuoc ung vien quanh vung dang co quan, sap xep nuoc theo threat va local score, roi chay minimax alpha-beta voi iterative deepening.
-
-**Thanh vien 1 can dien:**
-
-- 1 so do pipeline dep hon neu lam slide.
-- 1-2 cau tu giai thich theo cach hieu ca nhan.
-
-## Slide 4: Thuat toan va heuristic
-
-**Tieu de:** Classical AI search + Gomoku threats
+## Slide 5: Co So Ly Thuyet Classical AI
 
 **Noi dung tren slide:**
 
 | Thanh phan | Vai tro |
 |---|---|
-| Minimax | Gia lap hai ben di toi uu |
-| Alpha-beta | Cat nhanh cac nhanh khong can xet |
+| Minimax | Gia lap hai ben toi uu |
+| Alpha-beta pruning | Cat cac nhanh khong can xet |
 | Iterative deepening | Tim sau dan trong time limit |
 | Candidate pruning | Giam branching factor |
-| Move ordering | Uu tien nuoc co threat truoc |
-| Threat detection | Nhan dien open-four, broken-four, double-threat |
-| Evaluator | Cham diem `AttackScore - DefenseScore` |
-| Zobrist/TT | Cache trang thai da tim |
+| Move ordering | Dua nuoc co kha nang tot len truoc |
+| Zobrist hash + TT | Cache trang thai search |
+| Threat extension | Mo rong search cho mot so forcing moves |
 
-**Nguoi noi:** Thanh vien 1.
+**Difficulty:**
 
-**Loi thoai goi y:**
+| Difficulty | Depth | Candidate limit | Time limit | Policy prior |
+|---|---:|---:|---:|---|
+| Easy | 2 | 8 | 400 ms | Off |
+| Medium | 3 | 10 | 1200 ms | On |
+| Hard | 4 | 12 | 2200 ms | On |
 
-> Diem quan trong la AI khong chi dung minimax thuan tuy. Neu chi minimax tren board 15x15 thi qua cham. Nhom them candidate pruning de giam so nuoc can xet, move ordering de alpha-beta cat nhanh hon, va threat detection de engine hieu cac pattern dac thu cua Gomoku nhu open-four, closed-four, open-three, broken-three va double-threat.
+**Loi noi goi y:**
 
-**Can tranh noi qua:**
+> Easy uu tien toc do, Medium can bang cho demo, Hard tim sau hon. Medium va Hard co them policy prior tu model, nhung Easy giu classical thu gon de phan hoi nhanh.
 
-- Khong noi AI manh hon Rapfi/Yixin.
-- Khong noi full Threat Space Search.
-- Khong noi reinforcement learning/neural network.
-
-## Slide 5: Tactical demo va reason cua AI
-
-**Tieu de:** AI explainability qua reason
+## Slide 6: Threat Detection Va Reason
 
 **Noi dung tren slide:**
 
-| Case | Difficulty | AI move | Reason | Completed depth |
-|---|---|---|---|---:|
-| AI thang ngay | `[dien]` | `[dien]` | `winning_move` | `[dien]` |
-| AI chan thang | `[dien]` | `[dien]` | `blocking_win` | `[dien]` |
-| AI tao threat | `[dien]` | `[dien]` | `[dien]` | `[dien]` |
+| Reason | Y nghia |
+|---|---|
+| `opening_center` | Khai cuoc trung tam |
+| `winning_move` | AI thang ngay |
+| `blocking_win` | Chan doi thu thang ngay |
+| `creating_open_four` | Tao open-four |
+| `creating_double_threat` | Tao nhieu threat dong thoi |
+| `blocking_double_threat` | Chan double-threat |
+| `best_search_score` | Nuoc tot nhat theo search |
 
-**Reason can giai thich:**
+**Loi noi goi y:**
 
-- `winning_move`: AI co nuoc thang ngay.
-- `blocking_win`: AI chan nguoi choi thang ngay.
-- `creating_open_four`: AI tao bon quan mo.
-- `best_search_score`: AI chon nuoc co diem search tot nhat.
+> Reason la diem khac biet quan trong trong demo. Nguoi xem khong chi biet AI di o dau, ma con biet AI dang thang ngay, dang chan doi thu, hay dang xay attack theo evaluator.
 
-**Nguoi noi:** Thanh vien 1.
+**Demo goi y:** chuan bi board co 4 quan lien tiep de AI tra `winning_move` hoac `blocking_win`.
 
-**Loi thoai goi y:**
+## Slide 7: Data Va Kaggle Training
 
-> De viec demo khong chi la nhin AI danh, backend tra ve reason va completed_depth. Reason cho biet vi sao AI chon nuoc do. Vi du, trong case doi thu co bon quan lien tiep, AI uu tien blocking_win truoc khi search sau. Trong case AI co co hoi ket thuc van, AI tra ve winning_move.
+**Noi dung tren slide:**
 
-**Thanh vien 1 phai chuan bi:**
+- Data sinh tu arena/self-play, luu JSONL.
+- Moi sample gom board, policy target/prob va reward/outcome.
+- Chia file-level split de giam data leakage.
+- Notebook Kaggle train supervised policy-value model.
 
-- It nhat 2 anh UI hoac Swagger response.
-- Dien bang tactical demo trong slide.
-- Neu khong tao duoc `creating_open_four`, co the dung `best_search_score` va giai thich la nuoc tot nhat theo search/evaluator.
+**Thong ke data:**
 
-## Slide 6: Kien truc he thong va deploy
+| Nguon | So file | So sample |
+|---|---:|---:|
+| `data/` | 79 | 945,506 |
+| `data/additional/` | 70 | 836,244 |
+| Tong | 149 | 1,781,750 |
 
-**Tieu de:** Full-stack architecture
+**Loi noi goi y:**
+
+> Phan learning cua nhom khong phai reinforcement learning. Model duoc train supervised tu data JSONL. Muc tieu la hoc xu huong nuoc di de lam advisor va prior, khong phai tu thay the minimax.
+
+## Slide 8: CNN Consultant Model
 
 **Noi dung tren slide:**
 
 ```text
-User Browser
-  |
-  v
-Vercel Frontend (React/Vite)
-  |-- POST /api/get-move
-  v
-Render Backend (FastAPI + AI core)
-
-Vercel Frontend
-  |-- POST /arena/api/self-play
-  v
-Render Arena Service
+Board 15x15
+-> Encode 3 channels
+-> CNN backbone
+-> Policy head: 225 logits
+-> Value head: scalar value
+-> Legal mask
+-> Top-k suggested moves
 ```
 
-**Cau hinh deploy:**
+**Ket qua test:**
 
-- `render.yaml`: tao 2 service Render.
-- Backend health: `/api/health`.
-- Arena health: `/arena/api/health`.
-- Vercel env:
-  - `VITE_API_BASE_URL`
-  - `VITE_ARENA_API_BASE_URL`
-- Render env:
-  - `FRONTEND_ORIGINS`
+| Metric | Ket qua |
+|---|---:|
+| Test samples | 50,000 |
+| Top-1 accuracy | 40.244% |
+| Top-3 accuracy | 59.974% |
+| Top-5 accuracy | 69.194% |
+| Illegal top-1 after mask | 0.000% |
+| Value MAE | 0.725577 |
 
-**Nguoi noi:** Thanh vien 2.
+**Loi noi goi y:**
 
-**Loi thoai goi y:**
+> Top-1 40% nghe chua tuyet doi, nhung tot hon rat nhieu so voi random legal va center-first. Diem quan trong la legal mask dam bao model khong goi y o da co quan.
 
-> He thong duoc deploy tach frontend va backend. Frontend tren Vercel chi phu trach UI, con logic AI nam trong FastAPI backend tren Render. Arena service cung chay rieng tren Render de phuc vu che do AI tu dau. Cac URL backend khong hard-code trong source ma duoc doc qua bien moi truong.
-
-**Thanh vien 2 phai chuan bi:**
-
-- Link Vercel.
-- Link Render backend `/api/health`.
-- Link Render arena `/arena/api/health`.
-- Anh Swagger docs.
-
-## Slide 7: API validation va do on dinh online
-
-**Tieu de:** API contract, CORS va latency
+## Slide 9: Hybrid Policy Prior
 
 **Noi dung tren slide:**
 
-| API | Input | Output | Muc dich |
-|---|---|---|---|
-| `/api/get-move` | board, player, difficulty | row, col, reason, evaluation, completed_depth | AI chon nuoc |
-| `/arena/api/self-play` | games, save_to_disk | samples, latest_game, config | AI tu dau |
+**Cach tich hop:**
 
-**Bang latency can dien:**
+1. Classical engine sinh candidate.
+2. Engine kiem tra immediate win/block truoc.
+3. Neu khong co tactical move bat buoc, goi model lay top-k.
+4. Xac suat model duoc doi thanh bonus ordering.
+5. Alpha-beta search van quyet dinh cuoi cung.
 
-| Endpoint | Lan 1 | Lan 2 | Lan 3 | Nhan xet |
-|---|---:|---:|---:|---|
-| Backend health | `[ms]` | `[ms]` | `[ms]` | `[dien]` |
-| Arena health | `[ms]` | `[ms]` | `[ms]` | `[dien]` |
-| Get move Medium | `[ms]` | `[ms]` | `[ms]` | `[dien]` |
-| Arena self-play | `[ms]` | `[ms]` | `[ms]` | `[dien]` |
+**Vi sao khong cho model tu danh?**
 
-**Nguoi noi:** Thanh vien 2.
+- Top-1 chua du cao de tin tuyet doi.
+- Gomoku co nhieu the bat buoc chi sai 1 nuoc la thua.
+- Model co the hoc lech tu self-play data.
+- Prior chi sap xep, khong hard-prune, nen an toan hon.
 
-**Loi thoai goi y:**
+**Loi noi goi y:**
 
-> Phan deploy khong chi la dua app len internet. Nhom con kiem tra API contract, nghia la request gui len co dung schema va response co du cac truong can cho UI hay khong. Ngoai ra, do frontend va backend o hai domain khac nhau, CORS phai dung. Bang latency cho thay tinh on dinh cua demo online va giup nhan dien cold start cua Render.
+> Day la phan cai tien quan trong nhat ve thiet ke. Nhom khong thay engine bang model, ma dung model nhu mot la ban do uu tien cho search. Neu model sai, search va tactical rules van con co hoi sua.
 
-**Thanh vien 2 phai chuan bi:**
-
-- Dien bang latency that.
-- Ghi 2-3 rui ro: sai env, CORS, Render cold start.
-- Anh/chung cu Swagger response.
-
-## Slide 8: Benchmark design
-
-**Tieu de:** Benchmark doc lap voi deploy
+## Slide 10: Benchmark Model Va Baseline
 
 **Noi dung tren slide:**
 
-- Benchmark chay bang `benchmark_ai.py`.
-- Output: `benchmark_results.json`.
-- Muc tieu: kiem tra tactical correctness, khong phai do uptime deploy.
-- Case benchmark:
-  - Opening center.
-  - AI win horizontal/diagonal.
-  - Block human open-four.
-  - Block broken-four.
-  - Threat/open-four.
-- Agents so sanh:
-  - Random baseline.
-  - Center-first baseline.
-  - Greedy 1-ply.
-  - Basic minimax.
-  - Project Easy/Medium/Hard.
-
-**Nguoi noi:** Thanh vien 3.
-
-**Loi thoai goi y:**
-
-> Benchmark doc lap voi deploy. Deploy tra loi cau hoi he thong co chay online khong, con benchmark tra loi cau hoi AI co chon dung nuoc trong cac tinh huong chien thuat khong. Nhom so sanh AI cua du an voi cac baseline noi bo, tu random cho den minimax nong.
-
-**Thanh vien 3 phai chuan bi:**
-
-- Ghi ngay chay benchmark.
-- Ghi commit hash.
-- Ghi moi truong chay: local hay API deploy.
-
-## Slide 9: Benchmark results Easy/Medium/Hard
-
-**Tieu de:** Ket qua benchmark
-
-**Bang accuracy hien co:**
-
-| Agent | Correct | Total | Accuracy |
+| Phuong phap | Top-1 | Top-3 | Top-5 |
 |---|---:|---:|---:|
-| random_baseline | 0 | 8 | 0.00 |
-| center_first_baseline | 4 | 8 | 0.50 |
-| greedy_1ply_baseline | 6 | 8 | 0.75 |
-| basic_minimax_baseline | 8 | 8 | 1.00 |
-| project_easy | 8 | 8 | 1.00 |
-| project_medium | 8 | 8 | 1.00 |
-| project_hard | 8 | 8 | 1.00 |
+| Random legal | 0.585% | 1.714% | 2.814% |
+| Center-first | 2.352% | 4.778% | 6.412% |
+| CNN consultant | 40.244% | 59.974% | 69.194% |
 
-**Bang Easy/Medium/Hard can nguoi 3 dien lai neu chay moi:**
+**Tactical diagnostics:**
 
-| Difficulty | Case | Move | Reason | Depth | Time |
-|---|---|---|---|---:|---:|
-| Easy | Immediate win | `[dien]` | `[dien]` | `[dien]` | `[dien]` |
-| Easy | Immediate block | `[dien]` | `[dien]` | `[dien]` | `[dien]` |
-| Medium | Immediate win | `[dien]` | `[dien]` | `[dien]` | `[dien]` |
-| Medium | Immediate block | `[dien]` | `[dien]` | `[dien]` | `[dien]` |
-| Hard | Immediate win | `[dien]` | `[dien]` | `[dien]` | `[dien]` |
-| Hard | Immediate block | `[dien]` | `[dien]` | `[dien]` | `[dien]` |
-
-**Nguoi noi:** Thanh vien 3.
-
-**Loi thoai goi y:**
-
-> Ket qua hien tai cho thay project_easy, project_medium va project_hard deu dat 8/8 tren bo tactical benchmark noi bo. Tuy nhien day la benchmark noi bo, chua tich hop engine ngoai nhu Rapfi hay Yixin, nen khong ket luan la SOTA. Dieu quan trong la AI xu ly dung cac case co ban va tra ve reason ro rang.
-
-**Can nhan manh:**
-
-- Benchmark noi bo.
-- Chua so voi engine ngoai.
-- Medium phu hop demo neu Hard cham tren cloud.
-
-## Slide 10: UI, demo flow va user experience
-
-**Tieu de:** UI demo va kha nang trinh bay AI
-
-**Noi dung tren slide:**
-
-- Play Vs AI:
-  - Click board.
-  - Doi difficulty.
-  - AI tra nuoc di.
-  - Panel hien reason/evaluation/completed depth/elapsed time.
-- Arena Self-Play:
-  - Run arena.
-  - Replay game moi nhat.
-  - Summary samples/wins/draws.
-- Error handling:
-  - Backend unreachable.
-  - Arena unreachable.
-  - Disable click khi AI dang nghi.
-
-**Bang test UI can dien:**
-
-| UI item | Ket qua | Ghi chu |
+| Case | Top-1 hit | Top-3 hit |
 |---|---|---|
-| Board khong vo layout | `[Dat/Chua]` | `[dien]` |
-| AI reason hien dung | `[Dat/Chua]` | `[dien]` |
-| Doi difficulty duoc | `[Dat/Chua]` | `[dien]` |
-| Arena replay chay | `[Dat/Chua]` | `[dien]` |
+| AI win horizontal | Co | Co |
+| Block human horizontal | Co | Co |
 
-**Nguoi noi:** Thanh vien 3.
+**Loi noi goi y:**
 
-**Loi thoai goi y:**
+> Bang nay cho thay model hoc duoc distribution tu data, nhung bang nay khong dong nghia voi AI manh hon engine thi dau. No chi chung minh model co gia tri lam advisor va prior.
 
-> UI duoc thiet ke de phuc vu demo AI, khong chi de choi game. Vi vay panel ben canh hien cac thong tin debug nhu reason, evaluation va completed depth. Dieu nay giup giai thich tai sao AI chon nuoc di, dong thoi cho thay su khac nhau giua cac difficulty.
-
-**Thanh vien 3 phai chuan bi:**
-
-- Anh Play Vs AI sau khi AI di nuoc.
-- Anh Arena Self-Play.
-- Bang test UI.
-
-## Slide 11: Kho khan, han che va cach xu ly
-
-**Tieu de:** Lessons learned
+## Slide 11: A/B Benchmark Classical vs Hybrid
 
 **Noi dung tren slide:**
 
-| Kho khan | Cach xu ly |
+Dieu kien: cung Medium config, cung depth/candidate/time limit; model warm-up truoc khi do.
+
+| Case | Classical | Hybrid | Nhan xet |
+|---|---|---|---|
+| Opening center | [7,7], 0.08 ms | [7,7], 0.07 ms | Giu dung opening |
+| AI win horizontal | winning_move, 12.88 ms | winning_move, 12.32 ms | Khong pha tactical |
+| Block human horizontal | blocking_win, 12.61 ms | blocking_win, 9.65 ms | Khong pha block |
+| Two-stones opening | depth 2, 1247.50 ms | depth 2, 1258.07 ms | Khac move, cung score |
+| Scattered midgame | depth 2, 1279.52 ms | depth 2, 1282.87 ms | Tuong duong |
+| Quiet midgame | depth 1, 1327.47 ms | depth 1, 1333.40 ms | Tuong duong |
+
+**Ket luan tren slide:**
+
+- Hybrid policy prior an toan voi tactical rules.
+- Chua thay latency giam ro trong benchmark nho.
+- Can mo rong A/B self-play de ket luan ve playing strength.
+
+**Loi noi goi y:**
+
+> Day la phan chung minh nhom danh gia trung thuc. Model co tac dung ve mat ordering/advisor, nhung benchmark hien tai chua du de noi no lam AI manh hon ro ret trong moi tinh huong.
+
+## Slide 12: Cai Dat, Kiem Thu Va Demo
+
+**Noi dung tren slide:**
+
+**API:**
+
+| Endpoint | Vai tro |
 |---|---|
-| Branching factor lon | Candidate pruning, move ordering, alpha-beta |
-| AI can phan hoi nhanh | Iterative deepening + time limit |
-| Threat phuc tap | Threat detector + evaluator rieng |
-| Deploy frontend/backend khac domain | Env variables + CORS |
-| Render cold start | Warm up backend truoc khi demo |
+| `GET /api/health` | Check backend |
+| `POST /api/get-move` | AI chon nuoc |
+| `POST /api/get-consultation` | Model goi y top-k |
+| `POST /arena/api/self-play` | Arena self-play |
 
-**Han che can noi ro:**
+**Verification da co:**
 
-- Chua phai SOTA Gomoku engine.
-- Chua co full TSS/VCF solver.
-- Chua dung RL/neural network.
-- Chua benchmark doi dau Rapfi/Yixin.
-- Mot so double-threat phuc tap co the chua danh gia chuan.
+| Hang muc | Ket qua |
+|---|---|
+| Python compile backend/arena/dl | PASS |
+| `tests.test_policy_prior_ordering` | PASS |
+| `tests.test_tactical_cases` | PASS |
+| `tests.test_consultant_api` | PASS |
+| Arena smoke test | PASS |
 
-**Nguoi noi:** Nguoi lam report.
+**Demo flow:**
 
-**Loi thoai goi y:**
+1. Mo app.
+2. Choi mot nuoc Medium.
+3. Bat consultant advisor de xem top-k moves.
+4. Chi vao reason/evaluation/completed_depth.
+5. Neu co thoi gian, chay arena self-play.
 
-> Nhom khong claim AI la engine manh nhat. Gia tri cua du an nam o viec tich hop cac ky thuat AI co dien vao mot bai toan co branching factor lon va co the demo/giai thich duoc. Cac han che nay cung la co so cho huong phat trien tiep theo.
+## Slide 13: Ket Luan Va Huong Phat Trien
 
-## Slide 12: Ket luan va huong phat trien
+**Ket luan:**
 
-**Tieu de:** Ket luan
+- Da xay dung full-stack Gomoku/Caro 15x15.
+- AI chinh la classical search engine co the giai thich.
+- Threat detection va immediate win/block giup tranh loi tactical mot nuoc.
+- CNN consultant model hoc duoc policy tot hon baseline.
+- Hybrid policy prior duoc tich hop than trong: ho tro ordering, khong thay the search.
+- A/B benchmark cuc bo cho thay hybrid khong pha tactical, nhung chua chung minh manh hon ro ret.
 
-**Noi dung tren slide:**
+**Han che:**
 
-- Da xay dung he thong Gomoku/Caro 15x15 full-stack.
-- AI dung classical search:
-  - minimax/alpha-beta,
-  - iterative deepening,
-  - candidate pruning,
-  - threat detection,
-  - evaluator,
-  - transposition table.
-- Co UI explainability: reason, evaluation, completed depth.
-- Co benchmark noi bo va deploy public.
-- Co arena self-play cho phan tich/du lieu sau nay.
+- Chua phai engine Gomoku cap thi dau.
+- Chua so sanh truc tiep voi Rapfi/Yixin.
+- Chua co full Threat Space Search/VCF solver.
+- Model top-1 chua du cao de tu quyet dinh.
+- A/B benchmark con nho, chua phai self-play tournament.
 
 **Huong phat trien:**
 
-- Mo rong tactical benchmark suite.
-- Cai thien evaluator cho broken-four/double-threat.
-- Minimal Threat Space Search/VCF solver.
-- Tich hop engine ngoai de benchmark khach quan.
-- Khai thac arena JSONL cho huong learning-based.
+- Mo rong A/B benchmark thanh nhieu van self-play.
+- Them tactical suite cho broken-four, double-threat phuc tap.
+- Cai thien evaluator va threat detector.
+- Luu best move trong transposition table.
+- Nghien cuu VCF-lite/TSS-lite.
+- Nang chat luong data va model neu muon tang vai tro neural advisor.
 
-**Nguoi noi:** Nguoi lam report.
+## Slide 14 Neu Can: Backup Demo / Appendix
 
-**Loi thoai goi y:**
+Dung khi giang vien hoi sau hon hoac can backup luc demo online cham.
 
-> Tong ket lai, du an da dap ung ca phan AI lan phan he thong: co engine classical search, co benchmark, co UI giai thich va co deploy online. Neu phat trien tiep, nhom se uu tien benchmark sau hon, threat search day du hon va so sanh voi engine ngoai de danh gia khach quan hon.
+**Noi dung nen co:**
 
-## Slide 13 neu can: Demo truc tiep
+- Anh UI Play vs AI.
+- Anh consultant advisor hien top-k.
+- Anh Swagger docs.
+- Bang metrics model day du.
+- Bang A/B benchmark day du.
+- Lenh chay backend/frontend/arena.
 
-**Tieu de:** Live demo
-
-**Noi dung tren slide:**
-
-- Link Vercel: `[dien]`
-- Link backend health: `[dien]`
-- Link arena health: `[dien]`
-- Demo flow:
-  1. Mo app online.
-  2. Choi 1 nuoc Medium.
-  3. Chi vao reason/evaluation/completed depth.
-  4. Chuyen Arena.
-  5. Bam Run arena.
-
-**Nguoi noi:** Ca nhom, uu tien Thanh vien 2 dieu khien demo.
-
-**Luu y truoc demo:**
-
-- Mo backend Render truoc de warm up.
-- Kiem tra Vercel env dung URL Render.
-- Neu Hard cham, demo Medium.
-- Chuan bi anh/video backup neu internet loi.
-
-## Checklist tao slide
+## Checklist Tao Slide
 
 - [ ] Slide co link GitHub.
-- [ ] Slide co link Vercel/Render that.
-- [ ] Slide AI co pipeline va bang thuat toan.
-- [ ] Slide tactical demo da dien so lieu that.
-- [ ] Slide deploy co so do Vercel -> Render.
-- [ ] Slide API validation co bang contract/latency.
-- [ ] Slide benchmark co bang accuracy va Easy/Medium/Hard.
-- [ ] Slide UI co anh Play Vs AI va Arena.
-- [ ] Slide han che khong claim qua muc.
-- [ ] Slide ket luan co huong phat trien.
+- [ ] Slide co link demo neu co.
+- [ ] Slide co architecture Frontend -> Backend -> AI core/model.
+- [ ] Slide co AI core pipeline.
+- [ ] Slide co threat detection va reason.
+- [ ] Slide co data + Kaggle training.
+- [ ] Slide co model metrics top-1/top-3/top-5.
+- [ ] Slide co A/B benchmark classical vs hybrid.
+- [ ] Slide co verification/test results.
+- [ ] Slide co han che trung thuc, khong claim qua muc.
 
-## Checklist truoc ngay thuyet trinh
+## Checklist Truoc Ngay Thuyet Trinh
 
 - [ ] Push commit moi nhat len GitHub.
-- [ ] Vercel app mo duoc.
-- [ ] Backend `/api/health` tra `{"status":"ok"}`.
-- [ ] Arena `/arena/api/health` tra `{"status":"ok"}`.
-- [ ] Da warm up Render truoc khi vao phong.
-- [ ] Co PDF report bien dich tu `REPORT_BTL.tex`.
-- [ ] Co anh/video backup cho demo.
-- [ ] Moi thanh vien thu noi phan cua minh it nhat 1 lan.
+- [ ] Dien link Vercel/Render neu dung demo online.
+- [ ] Backend `/api/health` tra OK.
+- [ ] Arena `/arena/api/health` tra OK neu demo arena.
+- [ ] Chay `npm.cmd run build` trong frontend.
+- [ ] Chay Python compile check.
+- [ ] Chay focused tests neu kip.
+- [ ] Chuan bi anh/video backup cho demo.
+- [ ] Tap noi sao cho Slide 11 khong bi noi qua: model ho tro, chua claim manh hon chac chan.
 
-## Loi noi ngan cho Q&A
+## Q&A Ngan
 
 **Hoi: AI co dung machine learning khong?**
 
-> Khong. AI hien tai la classical game AI, dung minimax/alpha-beta, heuristic evaluator va threat detection. Arena co the sinh du lieu JSONL cho huong phat trien learning-based sau nay.
+> Co, nhung khong phai la thanh phan quyet dinh duy nhat. AI chinh van la classical search engine. Model CNN duoc train supervised tu data self-play de lam consultant advisor va policy prior cho move ordering.
 
-**Hoi: Benchmark nay co so voi SOTA chua?**
+**Hoi: Day co phai reinforcement learning khong?**
 
-> Chua. Benchmark hien tai la benchmark noi bo voi baseline don gian va cac tactical case. Nhom khong claim SOTA; huong tiep theo la tich hop engine ngoai nhu Rapfi/Yixin de so sanh khach quan hon.
+> Khong. Model hien tai la supervised learning tu JSONL data, khong co vong lap self-play RL kieu AlphaZero voi MCTS.
 
-**Hoi: Vi sao completed depth co luc bang 0?**
+**Hoi: Model co lam AI manh hon khong?**
 
-> Vi AI co cac rule xu ly nhanh truoc search sau, vi du opening center, winning_move hoac blocking_win. Trong cac case do, AI tra ket qua ngay nen completed_depth co the la 0.
+> Model giup cung cap prior thong ke va top-k advisor. A/B benchmark cuc bo cho thay hybrid khong pha tactical rules va giu completed depth tuong duong, nhung chua du de ket luan playing strength tang ro ret. Can benchmark nhieu van hon de chung minh.
 
-**Hoi: Deploy co lien quan benchmark khong?**
+**Hoi: Vi sao khong cho model tu danh luon?**
 
-> Deploy va benchmark la hai phan doc lap. Deploy chung minh he thong chay public va API tich hop dung. Benchmark chung minh AI chon nuoc dung trong cac case chien thuat.
+> Top-1 cua model khoang 40%, chua du an toan cho Gomoku vi mot nuoc sai trong tactical case co the thua ngay. Vi vay nhom chi dung model de sap xep candidate, con search va threat rules van quyet dinh cuoi cung.
 
-**Hoi: Neu Render cham thi sao?**
+**Hoi: Co manh hon Rapfi/Yixin khong?**
 
-> Render co the cold start, dac biet goi free. Nhom co health check va se warm up backend truoc khi demo. Khi demo gameplay, Medium la muc can bang hon neu Hard phan hoi cham.
+> Nhom khong claim nhu vay. Rapfi/Yixin la engine thi dau chuyen sau. Du an nay tap trung minh hoa classical AI search ket hop threat knowledge va supervised advisor trong pham vi mon hoc.
+
+**Hoi: Vi sao completed depth bang 0?**
+
+> Vi AI co cac buoc xu ly nhanh truoc search sau, vi du opening center, winning_move hoac blocking_win. Depth 0 trong cac case nay khong phai loi, ma la do rule tactical tra ve ngay.
+
+**Hoi: Neu latency hybrid khong tot hon, vi sao van tich hop model?**
+
+> Vi model van co gia tri voi advisor UI va ordering. Ket qua hien tai cho thay no an toan, nhung chua du manh de claim toi uu latency. Day la nen tang cho benchmark va cai tien tiep theo.

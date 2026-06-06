@@ -11,6 +11,10 @@ Huong dan nay dung Vercel cho frontend React/Vite va Render cho backend FastAPI.
 2. Dam bao cac file sau co trong repo:
    - `render.yaml`
    - `backend/requirements.txt`
+   - `backend/requirements-ml.txt`
+   - `dl/model.py`
+   - `dl/predict_policy.py`
+   - `model/consultant_model.pt`
    - `frontend/package.json`
    - `frontend/.env.example`
    - `backend/.env.example`
@@ -38,7 +42,7 @@ https://gomoku-ai-arena.onrender.com
 
 ```yaml
 rootDir: backend
-buildCommand: pip install -r requirements.txt
+buildCommand: pip install -r requirements-ml.txt
 startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
 healthCheckPath: /api/health
 ```
@@ -63,7 +67,7 @@ Backend:
 
 ```text
 Root Directory: backend
-Build Command: pip install -r requirements.txt
+Build Command: pip install -r requirements-ml.txt
 Start Command: uvicorn main:app --host 0.0.0.0 --port $PORT
 ```
 
@@ -124,6 +128,7 @@ Sau khi sua bien moi truong, redeploy backend va arena.
 
 - Mo `https://<render-backend-url>/api/health`, thay `{"status":"ok"}`.
 - Mo `https://<render-backend-url>/docs`, thay Swagger UI cua FastAPI.
+- Goi `POST https://<render-backend-url>/api/get-consultation`, thay `model_available: true` neu model da duoc deploy.
 - Mo `https://<render-arena-url>/arena/api/health`, thay `{"status":"ok"}`.
 - Mo app Vercel.
 - Danh mot nuoc co, AI tra loi duoc.
@@ -158,6 +163,36 @@ Neu dung goi mien phi hoac instance ngu sau thoi gian khong co traffic, request 
 ### AI Hard cham
 
 Hard dung search sau hon Easy/Medium. Neu demo tren instance yeu, uu tien Medium de dam bao phan hoi on dinh.
+
+### Consultant model khong loaded
+
+Kiem tra cac diem sau:
+
+1. Backend Render phai build bang:
+
+```text
+pip install -r requirements-ml.txt
+```
+
+2. Repository phai co file:
+
+```text
+model/consultant_model.pt
+```
+
+3. Repository phai co thu muc:
+
+```text
+dl/
+```
+
+4. Goi endpoint consultation de kiem tra:
+
+```http
+POST /api/get-consultation
+```
+
+Neu response co `model_available: false`, backend van chay classical AI duoc, nhung consultant advisor va hybrid policy prior se fallback ve classical ordering.
 
 ### Arena tao output path rong
 

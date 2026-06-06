@@ -1,9 +1,16 @@
 from __future__ import annotations
 
+from collections.abc import Callable, Mapping
+
 from ai_types import AI_STONE, BOARD_SIZE, DIRECTIONS, EMPTY, HUMAN_STONE, SearchConfig, ThreatSummary, WIN_LENGTH
 from board_rules import has_winner, in_bounds, line_potential
 from evaluator import BoardEvaluator
 from threats import ThreatDetector
+
+PolicyPriorProvider = Callable[
+    [list[list[int]], list[tuple[int, int]]],
+    Mapping[tuple[int, int], float],
+]
 
 
 class MoveOrdering:
@@ -13,13 +20,15 @@ class MoveOrdering:
         evaluator: BoardEvaluator,
         threat_detector: ThreatDetector,
         board_size: int = BOARD_SIZE,
+        policy_prior_provider: PolicyPriorProvider | None = None,
     ) -> None:
         self.config = config
         self.evaluator = evaluator
         self.threat_detector = threat_detector
         self.board_size = board_size
+        self.policy_prior_provider = policy_prior_provider
 
-    def generate_candidates(self, board: list[list[int]]) -> list[tuple[int, int]]:
+    def generate_candidates(self, board: list[list[int]], use_policy_prior: bool = False) -> list[tuple[int, int]]:
         occupied = [
             (row, col)
             for row in range(self.board_size)
@@ -40,7 +49,13 @@ class MoveOrdering:
                     if in_bounds(next_row, next_col, self.board_size) and board[next_row][next_col] == EMPTY:
                         candidates.add((next_row, next_col))
 
-        ranked = sorted(candidates, key=lambda move: self.score_move(board, move[0], move[1]), reverse=True)
+        candidate_list = sorted(candidates)
+        policy_priors = self.policy_prior_scores(board, candidate_list, use_policy_prior)
+        ranked = sorted(
+            candidate_list,
+            key=lambda move: self.score_move(board, move[0], move[1]) + self.policy_prior_bonus(policy_priors, move),
+            reverse=True,
+        )
         forcing = [move for move in ranked if self.is_forcing_candidate(board, move[0], move[1])]
         selected_limit = max(self.config.candidate_limit, len(forcing), 1)
 
@@ -54,6 +69,53 @@ class MoveOrdering:
                 break
 
         return selected
+
+    def policy_prior_scores(
+        self,
+        board: list[list[int]],
+        candidates: list[tuple[int, int]],
+        use_policy_prior: bool,
+    ) -> Mapping[tuple[int, int], float]:
+        if not use_policy_prior or self.config.policy_prior_weight <= 0 or not candidates:
+            return {}
+
+        if self.policy_prior_provider is not None:
+            return self.policy_prior_provider(board, candidates)
+
+        return self.model_policy_priors(board)
+
+    def model_policy_priors(self, board: list[list[int]]) -> dict[tuple[int, int], float]:
+        try:
+            from dl.predict_policy import predict_top_moves
+        except (ImportError, ModuleNotFoundError):
+            return {}
+
+        legal_count = sum(1 for row in board for cell in row if cell == EMPTY)
+        if legal_count <= 0:
+            return {}
+
+        top_k = min(legal_count, max(self.config.policy_prior_top_k, self.config.candidate_limit))
+        result = predict_top_moves(board, AI_STONE, top_k)
+        if not result.get("model_available", False):
+            return {}
+
+        priors: dict[tuple[int, int], float] = {}
+        for move in result.get("moves", []):
+            try:
+                row = int(move["row"])
+                col = int(move["col"])
+                priors[(row, col)] = float(move["probability"])
+            except (KeyError, TypeError, ValueError):
+                continue
+        return priors
+
+    def policy_prior_bonus(
+        self,
+        policy_priors: Mapping[tuple[int, int], float],
+        move: tuple[int, int],
+    ) -> int:
+        probability = max(0.0, min(1.0, policy_priors.get(move, 0.0)))
+        return int(probability * self.config.policy_prior_weight)
 
     def score_move(self, board: list[list[int]], row: int, col: int) -> int:
         board[row][col] = AI_STONE

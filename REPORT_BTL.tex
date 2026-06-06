@@ -3,7 +3,7 @@
 \usepackage{fontspec}
 \usepackage{polyglossia}
 \setmainlanguage{vietnamese}
-\setmainfont{Times New Roman}
+\IfFontExistsTF{Times New Roman}{\setmainfont{Times New Roman}}{\setmainfont{TeX Gyre Termes}}
 
 \usepackage[a4paper,margin=2.5cm]{geometry}
 \usepackage{amsmath}
@@ -36,26 +36,16 @@
 }
 \lstset{style=code}
 
-\newcommand{\projectname}{Gomoku AI 15x15}
+\newcommand{\projectname}{Gomoku/Caro 15x15 AI}
 \newcommand{\repoURL}{\url{https://github.com/Azios1010/tictactoe}}
-\newcommand{\todo}[1]{\textcolor{red!70!black}{[#1]}}
-\newcommand{\fillplaceholder}[2]{
-  \par\medskip
-  \noindent\fbox{
-    \begin{minipage}{0.94\linewidth}
-      \textbf{#1}\\[0.35em]
-      #2
-    \end{minipage}
-  }
-  \par\medskip
-}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
 
 \title{\textbf{\projectname}\\
-\large Một hệ thống AI cổ điển có thể giải thích cho bài toán Gomoku/Caro 15x15}
+\large Hệ thống AI kết hợp tìm kiếm cổ điển, tri thức threat và mô hình cố vấn học giám sát}
 \author{
-  Nhóm thực hiện: \todo{Điền tên các thành viên}\\
-  Môn học: \todo{Điền tên học phần}\\
-  Giảng viên: \todo{Điền tên giảng viên}
+  Nhóm thực hiện: \textit{điền tên các thành viên}\\
+  Môn học: \textit{điền tên học phần}\\
+  Giảng viên: \textit{điền tên giảng viên}
 }
 \date{\today}
 
@@ -63,603 +53,412 @@
 \maketitle
 
 \begin{abstract}
-Báo cáo trình bày quá trình xây dựng một hệ thống chơi Gomoku/Caro trên bàn cờ 15x15 giữa người chơi và tác tử AI. Khác với các hướng học tăng cường hoặc huấn luyện mạng nơ-ron, dự án tập trung vào hướng AI cổ điển: minimax, alpha-beta pruning, iterative deepening, sinh nước đi ứng viên, sắp xếp nước đi, phát hiện threat, heuristic evaluation, Zobrist hashing và transposition table. Hệ thống được triển khai full-stack với frontend React/Vite, backend FastAPI và một dịch vụ arena cho AI tự đấu. Ngoài mã nguồn, nhóm triển khai bản demo public trên internet bằng Vercel và Render để phục vụ kiểm thử và trình diễn. Kết quả benchmark nội bộ cho thấy AI của dự án xử lý đúng các tình huống chiến thuật cơ bản như đánh thắng ngay, chặn bốn quân liên tiếp, xử lý broken-four và đánh trung tâm khi khai cuộc. Báo cáo đồng thời nêu rõ giới hạn: hệ thống chưa phải engine Gomoku cấp thi đấu, chưa tích hợp full Threat Space Search/VCF solver và chưa so sánh trực tiếp với các engine mạnh như Rapfi hoặc Yixin.
+Báo cáo trình bày quá trình xây dựng hệ thống chơi Gomoku/Caro trên bàn cờ 15x15. Thành phần ra quyết định chính của dự án là một engine AI cổ điển sử dụng minimax, alpha-beta pruning, iterative deepening, sinh nước đi ứng viên, move ordering, threat detection, heuristic evaluation, Zobrist hashing và transposition table. Bên cạnh đó, dự án mở rộng thêm một mô hình CNN policy-value học giám sát từ dữ liệu self-play để đóng vai trò cố vấn: mô hình gợi ý các nước có xác suất cao, còn engine cổ điển vẫn chịu trách nhiệm xử lý chiến thuật bắt buộc như thắng ngay, chặn thắng và đánh giá tìm kiếm. Kết quả thực nghiệm cho thấy mô hình đạt top-1 accuracy 40.244\%, top-3 accuracy 59.974\% và top-5 accuracy 69.194\% trên tập test, đồng thời illegal top-1 sau legal mask bằng 0. Hệ thống được triển khai full-stack với frontend React/Vite, backend FastAPI và arena self-play để sinh dữ liệu. Báo cáo cũng nêu rõ giới hạn: đây chưa phải engine Gomoku cấp thi đấu, chưa tích hợp Threat Space Search/VCF solver đầy đủ và chưa chứng minh mạnh hơn các engine chuyên nghiệp như Rapfi hoặc Yixin.
 \end{abstract}
 
-\noindent\textbf{Từ khóa:} Gomoku, Caro, minimax, alpha-beta pruning, heuristic search, threat detection, FastAPI, React, Vercel, Render.
+\noindent\textbf{Từ khóa:} Gomoku, Caro, minimax, alpha-beta pruning, heuristic search, threat detection, CNN policy-value, policy prior, FastAPI, React.
 
 \tableofcontents
 \newpage
 
-\section{Thông tin chung và kết quả nộp}
+\section{Thông Tin Chung}
 
-\subsection{Thông tin dự án}
+\begin{longtable}{p{0.30\textwidth}p{0.60\textwidth}}
+\toprule
+\textbf{Mục} & \textbf{Nội dung} \\
+\midrule
+Tên đề tài & Xây dựng AI cho game Gomoku/Caro 15x15 \\
+Loại bài toán & Game đối kháng, turn-based, zero-sum \\
+Repository & \repoURL \\
+Tên thư mục & \path{Tictactoe}; tên cũ của repo, nhưng bài toán hiện tại là Gomoku/Caro 15x15 \\
+Frontend & React + Vite \\
+Backend & Python FastAPI + Pydantic + Uvicorn \\
+AI chính & Classical game engine \\
+Thuật toán chính & Minimax, alpha-beta pruning, iterative deepening \\
+Tri thức miền & Threat detection, heuristic pattern evaluator, immediate win/block \\
+Thành phần mở rộng & Supervised CNN consultant model và hybrid policy prior \\
+\bottomrule
+\end{longtable}
 
-\begin{itemize}[leftmargin=*]
-  \item \textbf{Tên dự án:} \projectname.
-  \item \textbf{Tên repository/thư mục:} \texttt{Tictactoe}. Tên repo là lịch sử của dự án; trò chơi hiện tại là Gomoku/Caro 15x15, không phải tic-tac-toe 3x3.
-  \item \textbf{Mã nguồn:} \repoURL.
-  \item \textbf{Link demo frontend:} \todo{Điền link Vercel}.
-  \item \textbf{Link backend API:} \todo{Điền link Render backend}.
-  \item \textbf{Link arena API:} \todo{Điền link Render arena}.
-  \item \textbf{Frontend:} React + Vite.
-  \item \textbf{Backend:} Python + FastAPI + Pydantic + Uvicorn.
-  \item \textbf{AI core:} classical game AI, không dùng reinforcement learning, không huấn luyện neural network.
-\end{itemize}
+\section{Giới Thiệu Bài Toán}
+\label{sec:problem}
 
-\subsection{Đối chiếu yêu cầu báo cáo}
+Gomoku/Caro là trò chơi hai người, mỗi người lần lượt đặt quân lên bàn cờ. Trong dự án này, bàn cờ có kích thước 15x15. Một bên chiến thắng khi tạo được năm quân liên tiếp theo hàng ngang, hàng dọc hoặc hai đường chéo.
+
+Quy ước board trong engine:
+
+\begin{longtable}{p{0.20\textwidth}p{0.70\textwidth}}
+\toprule
+\textbf{Giá trị} & \textbf{Ý nghĩa} \\
+\midrule
+\texttt{0} & Ô trống \\
+\texttt{1} & AI/O/black trong internal engine \\
+\texttt{-1} & Người chơi/X/white \\
+\bottomrule
+\end{longtable}
+
+Bài toán AI là chọn nước đi hợp lý trong không gian trạng thái rất lớn. Ở đầu game, bàn cờ có 225 ô trống. Nếu minimax xét toàn bộ ô trống thì branching factor tăng rất nhanh, không phù hợp cho ứng dụng tương tác. Vì vậy, dự án kết hợp search cổ điển với các kỹ thuật giảm nhánh và tri thức đặc thù của Gomoku.
+
+\subsection{Mục tiêu}
+
+Hệ thống hướng tới các mục tiêu sau:
+
+\begin{enumerate}[leftmargin=*]
+  \item Chọn nước đi hợp lý trong thời gian ngắn.
+  \item Xử lý đúng các tình huống chiến thuật cơ bản như thắng ngay, chặn thắng, tạo hoặc chặn open-four và double-threat.
+  \item Trả về thông tin giải thích gồm \texttt{reason}, \texttt{evaluation} và \texttt{completed\_depth}.
+  \item Hoạt động trong ứng dụng full-stack gồm frontend, backend và chế độ arena self-play.
+  \item Có dữ liệu benchmark và regression test để đánh giá tiến bộ.
+  \item Mở rộng bằng supervised learning advisor mà không thay thế hoàn toàn engine cổ điển.
+\end{enumerate}
+
+Mục tiêu của dự án không phải là vượt qua các engine thi đấu như Rapfi hoặc Yixin. Trọng tâm của dự án là minh họa cách kết hợp classical search với threat knowledge để tạo một bot Gomoku thực tế, có thể giải thích và phù hợp phạm vi học phần.
+
+\section{Kiến Trúc Hệ Thống}
+\label{sec:system}
+
+\subsection{Tổng quan luồng xử lý}
+
+\begin{lstlisting}[language={}]
+Frontend React/Vite
+  -> Backend FastAPI
+      -> GomokuAI classical engine
+      -> Consultant CNN advisor
+
+Frontend React/Vite
+  -> Arena FastAPI service
+      -> Self-play engine
+      -> JSONL data generation
+\end{lstlisting}
+
+Luồng người chơi với AI:
+
+\begin{lstlisting}[language={}]
+Người chơi click một ô
+-> Frontend đặt quân -1
+-> Frontend gọi POST /api/get-move
+-> Backend validate board và difficulty
+-> GomokuAI.get_move_analysis()
+-> Backend trả row, col, evaluation, reason, completed_depth
+-> Frontend đặt quân AI 1 và hiển thị lý do nước đi
+\end{lstlisting}
+
+\subsection{Thành phần trong repository}
+
+\begin{longtable}{p{0.36\textwidth}p{0.54\textwidth}}
+\toprule
+\textbf{Thành phần} & \textbf{Vai trò} \\
+\midrule
+\path{frontend/src/App.jsx} & UI chính, play mode, arena mode và consultant advisor toggle \\
+\path{frontend/src/components/Board.jsx} & Render board 15x15 \\
+\path{frontend/src/components/Square.jsx} & Render từng ô, quân cờ và advisor badge \\
+\path{backend/main.py} & FastAPI API cho chế độ người chơi với AI \\
+\path{backend/ai_core.py} & Search orchestration, minimax, alpha-beta, iterative deepening và transposition table \\
+\path{backend/ai_types.py} & Constants, dataclass config và result \\
+\path{backend/board_rules.py} & Luật board cơ bản, winner check, normalize board \\
+\path{backend/threats.py} & Threat detection theo pattern \\
+\path{backend/evaluator.py} & Heuristic evaluator \\
+\path{backend/move_ordering.py} & Candidate generation, tactical score và policy prior ordering \\
+\path{arena/} & Self-play engine và arena service \\
+\path{dl/model.py} & CNN policy-value model \\
+\path{dl/predict_policy.py} & Inference wrapper cho consultant model \\
+\path{model/} & Checkpoint và metrics model đã train \\
+\path{tests/} & Unit tests và tactical regression \\
+\bottomrule
+\end{longtable}
+
+\subsection{API chính}
 
 \begin{longtable}{p{0.28\textwidth}p{0.62\textwidth}}
 \toprule
-\textbf{Yêu cầu} & \textbf{Cách dự án đáp ứng} \\
+\textbf{Endpoint} & \textbf{Vai trò} \\
 \midrule
-Mã nguồn & Toàn bộ source code được đưa lên GitHub tại \repoURL. \\
-File hướng dẫn & \texttt{README.md} mô tả cách cài đặt/chạy backend, frontend, arena; \texttt{DEPLOYMENT.md} mô tả deploy Vercel/Render. \\
-Tài liệu báo cáo & File \texttt{REPORT\_BTL.tex} là bản báo cáo LaTeX; có thể biên dịch ra PDF để nộp. \\
-Giới thiệu bài toán & Mục \ref{sec:problem} mô tả Gomoku/Caro 15x15 và độ phức tạp tìm kiếm. \\
-Phương pháp giải quyết & Mục \ref{sec:method} mô tả search, evaluator, threat detection và cache. \\
-Chức năng hệ thống & Mục \ref{sec:system} trình bày người chơi với AI, arena, API và UI. \\
-Phần mềm/gói/dữ liệu dùng lại & Mục \ref{sec:reuse} liệt kê thư viện và dữ liệu. \\
-Khó khăn và cách vượt qua & Mục \ref{sec:difficulties}. \\
-Kết luận và hướng phát triển & Mục \ref{sec:conclusion}. \\
+\texttt{GET /api/health} & Kiểm tra backend đang chạy \\
+\texttt{POST /api/get-move} & Sinh nước đi AI chính theo difficulty \\
+\texttt{POST /api/get-consultation} & Trả về các gợi ý từ CNN consultant model \\
+\texttt{POST /api/report-game-result} & Ghi nhận kết quả ván chơi để phân tích \\
+\texttt{GET /arena/api/health} & Kiểm tra arena service \\
+\texttt{POST /arena/api/self-play} & Chạy AI tự đấu và sinh dữ liệu JSONL \\
 \bottomrule
 \end{longtable}
 
-\subsection{Các phần cần thành viên tự hoàn thiện}
+\section{Phương Pháp AI Chính}
+\label{sec:method}
 
-Bản LaTeX này là khung báo cáo chung. Các phần mô tả kiến trúc, phương pháp và yêu cầu nộp đã được viết sẵn để đảm bảo báo cáo có cấu trúc đầy đủ. Tuy nhiên, các bằng chứng thực nghiệm và phần đóng góp cá nhân cần được thành viên phụ trách tự điền để báo cáo phản ánh đúng công việc của nhóm.
+\subsection{Minimax và alpha-beta pruning}
 
-\begin{longtable}{p{0.18\textwidth}p{0.34\textwidth}p{0.38\textwidth}}
-\toprule
-\textbf{Người phụ trách} & \textbf{Phần cần điền} & \textbf{Đầu ra bắt buộc} \\
-\midrule
-Người 1 & AI core và tactical demo & Bảng tactical cases, ảnh minh chứng, giải thích 3 reason quan trọng, nhận xét giới hạn AI. \\
-Người 2 & Deploy và API validation & Link public, bảng env/CORS, bảng API contract, latency online. \\
-Người 3 & Benchmark, kiểm thử và UI & Bảng benchmark cuối cùng, kết quả build/test, ảnh UI Play/Arena, nhận xét Easy/Medium/Hard. \\
-\bottomrule
-\end{longtable}
+Engine chính dùng minimax để mô phỏng quá trình hai bên lần lượt chọn nước đi. AI cố gắng tối đa hóa điểm đánh giá, còn đối thủ cố gắng tối thiểu hóa điểm đó. Do Gomoku 15x15 có branching factor lớn, minimax thuần không đủ nhanh. Vì vậy, dự án dùng alpha-beta pruning để bỏ qua các nhánh không còn khả năng ảnh hưởng đến quyết định cuối cùng.
 
-\fillplaceholder{Checklist cho Người 1}
-{Điền các phần có nhãn ``Người 1 cần bổ sung''. Không chỉ chép lại thuật toán; cần có bằng chứng từ app/API: board setup, nước AI chọn, reason, evaluation, completed depth và ít nhất 2 ảnh hoặc response Swagger.}
+\subsection{Iterative deepening và time limit}
 
-\fillplaceholder{Checklist cho Người 3}
-{Điền các phần có nhãn ``Người 3 cần bổ sung''. Cần chạy lại benchmark/build/test nếu có thể, thay bảng số liệu tạm bằng số liệu cuối cùng, thêm ảnh UI Play Vs AI và Arena, sau đó viết nhận xét khách quan về Easy/Medium/Hard.}
+Thay vì cố định một độ sâu lớn, AI tìm kiếm theo từng độ sâu tăng dần. Nếu hết thời gian, hệ thống trả về nước tốt nhất đã biết ở độ sâu gần nhất hoàn thành. Cách này giúp AI ổn định trong môi trường tương tác: Easy trả nhanh, Medium cân bằng giữa chất lượng và độ trễ, Hard được phép tìm lâu hơn.
 
-\section{Giới thiệu bài toán}
-\label{sec:problem}
+\subsection{Candidate generation}
 
-Gomoku/Caro là trò chơi hai người trên bàn cờ dạng lưới. Hai bên lần lượt đặt quân vào các ô trống; người thắng là người tạo được năm quân liên tiếp theo hàng ngang, hàng dọc hoặc đường chéo. Trong dự án này, bàn cờ có kích thước 15x15. Quy ước trạng thái được dùng trong engine như sau:
+Không xét toàn bộ 225 ô, engine chỉ sinh các nước ứng viên quanh vùng đã có quân, theo bán kính và giới hạn số ứng viên của từng difficulty. Điều này giảm mạnh branching factor. Với board trống, AI ưu tiên đánh trung tâm để có thế phát triển cân bằng.
+
+\subsection{Threat detection và heuristic evaluator}
+
+Gomoku phụ thuộc nhiều vào pattern chiến thuật. Engine nhận diện các threat như open-four, closed-four, open-three, broken-three và double-threat. Evaluator kết hợp điểm tấn công và phòng thủ để đánh giá board. Các tình huống bắt buộc như thắng ngay hoặc chặn đối thủ thắng được xử lý trước search sâu.
+
+\subsection{Move ordering}
+
+Alpha-beta hiệu quả hơn nếu các nước mạnh được xét trước. Dự án xếp hạng ứng viên bằng local shape score, threat score, khả năng tấn công/phòng thủ và, ở Medium/Hard, thêm policy prior từ CNN consultant. Policy prior chỉ là điểm cộng để sắp thứ tự, không loại bỏ nước đi hợp lệ.
+
+\subsection{Zobrist hashing và transposition table}
+
+Trong search, cùng một thế cờ có thể xuất hiện qua nhiều thứ tự nước đi khác nhau. Zobrist hashing tạo khóa nhanh cho board và side-to-move. Transposition table lưu kết quả đã tính để giảm lặp lại, giúp search sâu hơn trong cùng giới hạn thời gian.
+
+\section{CNN Consultant Model và Hybrid Policy Prior}
+\label{sec:consultant}
+
+\subsection{Vai trò của model}
+
+Mô hình học giám sát không thay thế thuật toán chính. Model đóng vai trò cố vấn policy-value:
 
 \begin{itemize}[leftmargin=*]
-  \item \texttt{0}: ô trống.
-  \item \texttt{1}: quân AI/O/black trong internal engine.
-  \item \texttt{-1}: quân người chơi/X/white.
+  \item Policy head dự đoán xác suất cho 225 ô.
+  \item Value head ước lượng giá trị trạng thái.
+  \item Legal mask loại bỏ ô không hợp lệ trước khi chọn top-k.
+  \item Backend có endpoint \texttt{/api/get-consultation} để hiển thị các gợi ý model.
+  \item Engine Medium/Hard dùng policy prior để ưu tiên thứ tự xét nước ở root search.
 \end{itemize}
 
-Về mặt AI, Gomoku 15x15 khó hơn nhiều so với tic-tac-toe 3x3. Nếu xét toàn bộ ô trống trên bàn cờ đầu game, số nước hợp lệ có thể lên đến 225. Khi dùng minimax với độ sâu nhiều lớp, branching factor tăng theo hàm mũ. Do đó, một thuật toán vét cạn thuần túy không phù hợp cho ứng dụng tương tác. Mục tiêu của dự án là xây dựng một tác tử AI có thể chơi hợp lý trong giới hạn thời gian ngắn, đồng thời giải thích được lý do chọn nước đi thông qua các trường như \texttt{reason}, \texttt{evaluation} và \texttt{completed\_depth}.
+Cách tích hợp này thận trọng hơn so với để model tự đánh. Nếu model gợi ý chưa tốt, engine vẫn có immediate win/block, threat detection và alpha-beta search bảo vệ các quyết định chiến thuật quan trọng.
 
-\section{Kiến trúc hệ thống}
-\label{sec:system}
+\subsection{Kiến trúc model}
 
-\subsection{Tổng quan}
+Input của model là board 15x15 được mã hóa thành nhiều kênh đặc trưng, ví dụ quân của người đang xét, quân đối thủ, ô trống hoặc lượt đi. Backbone CNN học đặc trưng không gian cục bộ của Gomoku. Hai head đầu ra gồm policy logits kích thước 225 và value scalar.
 
-Hệ thống được tổ chức theo kiến trúc full-stack tách frontend, backend và arena:
+\subsection{Dữ liệu huấn luyện}
 
-\begin{lstlisting}
-.
-|-- backend/
-|   |-- ai_core.py
-|   |-- ai_types.py
-|   |-- board_rules.py
-|   |-- threats.py
-|   |-- evaluator.py
-|   |-- move_ordering.py
-|   |-- main.py
-|   `-- requirements.txt
-|-- frontend/
-|   |-- src/App.jsx
-|   |-- src/App.css
-|   `-- package.json
-|-- arena/
-|   |-- engine.py
-|   |-- service.py
-|   `-- run_arena.py
-|-- benchmark_ai.py
-|-- benchmark_results.json
-|-- render.yaml
-|-- DEPLOYMENT.md
-`-- README.md
-\end{lstlisting}
+Dữ liệu được sinh từ arena/self-play và lưu dạng JSONL. Mỗi sample gồm board, phân phối policy hoặc nước mục tiêu, reward/outcome và các thông tin phụ. Khi thiết kế notebook train trên Kaggle, dữ liệu được chia theo file-level split để giảm rò rỉ giữa train/validation/test.
 
-Frontend React/Vite chịu trách nhiệm hiển thị bàn cờ, nhận thao tác người dùng và gọi API. Backend FastAPI nhận board, validate request, chọn cấu hình AI theo difficulty và trả về nước đi. Arena là dịch vụ phụ cho chế độ AI tự đấu, dùng để sinh dữ liệu JSONL hoặc trình diễn self-play.
+\begin{longtable}{p{0.32\textwidth}p{0.24\textwidth}p{0.24\textwidth}}
+\toprule
+\textbf{Nguồn dữ liệu} & \textbf{Số file} & \textbf{Số sample} \\
+\midrule
+\path{data/} & 79 & 945,506 \\
+\path{data/additional/} & 70 & 836,244 \\
+\textbf{Tổng} & \textbf{149} & \textbf{1,781,750} \\
+\bottomrule
+\end{longtable}
 
-\subsection{Luồng người chơi với AI}
+\subsection{Kết quả model}
 
-Luồng chính của chế độ người chơi với AI:
+\begin{longtable}{p{0.40\textwidth}p{0.40\textwidth}}
+\toprule
+\textbf{Metric} & \textbf{Kết quả trên test set} \\
+\midrule
+Test samples & 50,000 \\
+Top-1 accuracy & 40.244\% \\
+Top-3 accuracy & 59.974\% \\
+Top-5 accuracy & 69.194\% \\
+Illegal top-1 trước legal mask & 65.078\% \\
+Illegal top-1 sau legal mask & 0.000\% \\
+Policy loss & 2.287984 \\
+Value MAE & 0.725577 \\
+Kaggle CUDA latency mean & 0.982 ms \\
+Kaggle CUDA latency p95 & 1.065 ms \\
+\bottomrule
+\end{longtable}
+
+So với baseline random legal và center-first, top-k accuracy của model cao hơn rõ rệt. Tuy nhiên, top-1 khoảng 40\% cũng cho thấy model chưa đủ tin cậy để tự quyết định toàn bộ nước đi. Vì vậy, lựa chọn tối ưu cho báo cáo là xem model như một advisor/policy prior, còn quyết định cuối cùng vẫn do search cổ điển đảm nhận.
+
+\subsection{Hybrid policy prior trong engine}
+
+Trong cấu hình hiện tại, Easy không dùng policy prior để giữ độ trễ thấp. Medium và Hard dùng model tại root search:
+
+\begin{longtable}{p{0.18\textwidth}p{0.24\textwidth}p{0.24\textwidth}p{0.24\textwidth}}
+\toprule
+\textbf{Difficulty} & \textbf{Vai trò} & \textbf{Policy prior weight} & \textbf{Policy prior top-k} \\
+\midrule
+Easy & Trả nhanh, baseline cổ điển & 0 & 0 \\
+Medium & Cân bằng latency và chất lượng & 10,000 & 24 \\
+Hard & Ưu tiên nước model gợi ý mạnh hơn & 20,000 & 32 \\
+\bottomrule
+\end{longtable}
+
+Thuật toán tích hợp:
 
 \begin{enumerate}[leftmargin=*]
-  \item Người chơi click vào một ô trên frontend.
-  \item Frontend cập nhật board local với quân \texttt{-1}.
-  \item Frontend gọi \texttt{POST /api/get-move}.
-  \item Backend validate board bằng Pydantic.
-  \item Backend chọn AI instance theo difficulty: Easy, Medium hoặc Hard.
-  \item AI trả \texttt{row}, \texttt{col}, \texttt{evaluation}, \texttt{reason}, \texttt{completed\_depth}.
-  \item Frontend đặt quân AI \texttt{1} và cập nhật panel debug.
+  \item Sinh candidate cổ điển để kiểm tra tactical move.
+  \item Nếu có winning move hoặc blocking win, trả ngay.
+  \item Nếu không có nước bắt buộc, gọi consultant model để lấy top-k legal moves.
+  \item Chuyển xác suất model thành bonus cho candidate ordering.
+  \item Chạy alpha-beta/iterative deepening trên danh sách đã sắp xếp.
 \end{enumerate}
 
-Ví dụ response:
+Điểm quan trọng là model không hard-prune các nước còn lại. Cách này giảm rủi ro bỏ sót nước phòng thủ khi model dự đoán sai.
 
-\begin{lstlisting}
+\section{Thực Nghiệm và Đánh Giá}
+\label{sec:experiment}
+
+\subsection{Mục tiêu đánh giá}
+
+Thực nghiệm tập trung vào ba câu hỏi:
+
+\begin{enumerate}[leftmargin=*]
+  \item AI có xử lý đúng tactical cases cơ bản không?
+  \item Model consultant có học được phân phối nước đi tốt hơn baseline không?
+  \item Hybrid policy prior có thể hỗ trợ thuật toán chính mà không phá vỡ các luật chiến thuật bắt buộc không?
+\end{enumerate}
+
+\subsection{Benchmark model}
+
+\begin{longtable}{p{0.32\textwidth}p{0.18\textwidth}p{0.18\textwidth}p{0.18\textwidth}}
+\toprule
+\textbf{Phương pháp} & \textbf{Top-1} & \textbf{Top-3} & \textbf{Top-5} \\
+\midrule
+Random legal baseline & 0.585\% & 1.714\% & 2.814\% \\
+Center-first baseline & 2.352\% & 4.778\% & 6.412\% \\
+CNN consultant & 40.244\% & 59.974\% & 69.194\% \\
+\bottomrule
+\end{longtable}
+
+Kết quả cho thấy model học được xu hướng nước đi từ dữ liệu self-play. Dù vậy, accuracy này chưa đủ để khẳng định model luôn chọn nước tối ưu theo nghĩa chiến thuật. Trong Gomoku, một nước sai ở thế bắt buộc có thể thua ngay, nên hệ thống vẫn ưu tiên search và threat rules.
+
+\subsection{Tactical diagnostics của model}
+
+\begin{longtable}{p{0.28\textwidth}p{0.20\textwidth}p{0.20\textwidth}p{0.22\textwidth}}
+\toprule
+\textbf{Case} & \textbf{Top-1 hit} & \textbf{Top-3 hit} & \textbf{Nhận xét} \\
+\midrule
+AI win horizontal & Có & Có & Model đặt một trong hai đầu của open-four lên top đầu \\
+Block human horizontal & Có & Có & Model nhận diện đúng ô cần chặn trong case đơn giản \\
+\bottomrule
+\end{longtable}
+
+\subsection{A/B benchmark: classical search và hybrid policy prior}
+
+Để kiểm tra model có thật sự hỗ trợ thuật toán chính hay không, nhóm chạy một A/B benchmark nhỏ trên cùng cấu hình Medium. Bản \textit{classical} tắt \texttt{policy\_prior\_weight}; bản \textit{hybrid} bật \texttt{policy\_prior\_weight=10000} và \texttt{policy\_prior\_top\_k=24}. Hai bản dùng cùng depth, candidate radius, candidate limit và time limit. Model được warm-up trước khi đo để không tính chi phí load checkpoint vào latency.
+
+\begin{longtable}{p{0.20\textwidth}p{0.17\textwidth}p{0.12\textwidth}p{0.20\textwidth}p{0.07\textwidth}p{0.09\textwidth}}
+\toprule
+\textbf{Case} & \textbf{Agent} & \textbf{Move} & \textbf{Reason} & \textbf{Depth} & \textbf{Mean ms} \\
+\midrule
+Opening center & Classical & [7,7] & opening\_center & 0 & 0.08 \\
+Opening center & Hybrid & [7,7] & opening\_center & 0 & 0.07 \\
+AI win horizontal & Classical & [7,9] & winning\_move & 0 & 12.88 \\
+AI win horizontal & Hybrid & [7,9] & winning\_move & 0 & 12.32 \\
+Block human horizontal & Classical & [7,9] & blocking\_win & 0 & 12.61 \\
+Block human horizontal & Hybrid & [7,9] & blocking\_win & 0 & 9.65 \\
+Two-stones opening & Classical & [6,7] & best\_search\_score & 2 & 1247.50 \\
+Two-stones opening & Hybrid & [8,7] & best\_search\_score & 2 & 1258.07 \\
+Scattered midgame & Classical & [8,7] & building\_attack & 2 & 1279.52 \\
+Scattered midgame & Hybrid & [8,7] & building\_attack & 2 & 1282.87 \\
+Quiet midgame & Classical & [6,7] & reducing\_threat & 1 & 1327.47 \\
+Quiet midgame & Hybrid & [6,7] & reducing\_threat & 1 & 1333.40 \\
+\bottomrule
+\end{longtable}
+
+Kết quả A/B cho thấy hybrid policy prior không làm hỏng các quyết định bắt buộc: opening, winning move và blocking move vẫn được xử lý trước search sâu. Ở các thế không có nước thắng/chặn ngay, hybrid đạt cùng completed depth với classical search. Tuy nhiên, latency chưa giảm rõ rệt vì các case non-forcing vẫn gần chạm time limit của Medium. Điều này củng cố lựa chọn thiết kế hiện tại: model nên được trình bày như một nguồn prior hỗ trợ ordering và advisor UI, chưa nên được xem là bằng chứng AI mạnh hơn rõ rệt.
+
+\subsection{Latency}
+
+Trong notebook Kaggle, inference latency trung bình của model trên CUDA khoảng 0.982 ms. Khi tích hợp vào backend local CPU, đo trực tiếp cho \texttt{predict\_top\_moves} cho kết quả trung bình khoảng 1.334 ms và p95 khoảng 1.652 ms sau khi model đã được load. Đo trực tiếp handler FastAPI nội bộ khoảng 2.285 ms trung bình và p95 khoảng 2.632 ms. Lần gọi đầu tiên có thể chậm hơn do chi phí load model, vì vậy backend đã warm-up consultant model khi startup.
+
+\subsection{Regression tests đã kiểm tra}
+
+\begin{longtable}{p{0.42\textwidth}p{0.18\textwidth}p{0.30\textwidth}}
+\toprule
+\textbf{Nhóm kiểm tra} & \textbf{Kết quả} & \textbf{Ý nghĩa} \\
+\midrule
+Python compile cho backend, arena và dl & PASS & Các file chính không lỗi cú pháp \\
+\path{tests.test_policy_prior_ordering} & PASS & Policy prior chỉ ảnh hưởng ordering khi được bật \\
+\path{tests.test_tactical_cases} & PASS & Immediate win/block và case chiến thuật cơ bản còn ổn định \\
+\path{tests.test_consultant_api} & PASS & API consultant, fallback model path và validation hoạt động \\
+Arena smoke test & PASS & Arena sinh được sample self-play nhỏ \\
+\bottomrule
+\end{longtable}
+
+\subsection{Đánh giá tác động của model lên thuật toán chính}
+
+Model có khả năng cải thiện thuật toán chính ở khía cạnh move ordering: nếu model đưa nước tốt lên sớm, alpha-beta có thể prune tốt hơn hoặc tìm thấy biến mạnh nhanh hơn. Tuy nhiên, với top-1 khoảng 40\%, model chưa đủ mạnh để được coi là bộ quyết định độc lập. Cải thiện thực tế phụ thuộc vào từng thế cờ:
+
+\begin{itemize}[leftmargin=*]
+  \item Ở thế chiến thuật rõ ràng, engine cổ điển thường đã xử lý tốt nhờ immediate win/block và threat detection.
+  \item Ở thế trung cuộc không có nước bắt buộc, model có thể giúp ưu tiên các candidate tự nhiên hơn.
+  \item Nếu model học lệch từ dữ liệu self-play chưa đủ mạnh, prior có thể làm thứ tự search kém hơn; do đó weight phải được giữ ở mức vừa phải.
+\end{itemize}
+
+Vì vậy, kết luận hợp lý là: model đã bổ sung một nguồn tri thức thống kê hữu ích cho ordering và tư vấn nước đi, nhưng chưa chứng minh chắc chắn làm AI mạnh hơn trong mọi tình huống. A/B benchmark cục bộ cho thấy hybrid không phá các quyết định tactical và giữ completed depth tương đương, nhưng chưa tạo lợi thế latency rõ rệt. Để chứng minh cải thiện sức chơi, cần mở rộng A/B benchmark thành nhiều ván self-play giữa bản không prior và bản có prior, cùng time limit và difficulty.
+
+\section{So Sánh Phương Pháp}
+\label{sec:comparison}
+
+\begin{longtable}{p{0.24\textwidth}p{0.34\textwidth}p{0.32\textwidth}}
+\toprule
+\textbf{Hệ thống} & \textbf{Cách tiếp cận} & \textbf{Nhận xét} \\
+\midrule
+Minimax cơ bản & Duyệt cây game với evaluator đơn giản & Dễ hiểu nhưng quá chậm/yếu trên board 15x15 nếu không giảm nhánh \\
+Dự án này & Minimax + alpha-beta + candidate pruning + move ordering + threat detection + TT + CNN prior & Phù hợp học phần, có thể giải thích và chạy tương tác \\
+Rapfi/Yixin & Engine Gomoku chuyên sâu, tối ưu nhiều tầng & Mạnh hơn đáng kể; dự án chưa so sánh trực tiếp và không tuyên bố vượt qua \\
+AlphaZero-Gomoku & Self-play RL, MCTS và neural network & Hướng học tăng cường phức tạp hơn; khác mục tiêu của dự án hiện tại \\
+\bottomrule
+\end{longtable}
+
+\section{Khó Khăn và Cách Xử Lý}
+\label{sec:difficulties}
+
+\begin{longtable}{p{0.32\textwidth}p{0.58\textwidth}}
+\toprule
+\textbf{Khó khăn} & \textbf{Cách xử lý} \\
+\midrule
+Branching factor rất lớn & Chỉ sinh candidate gần quân đã có, giới hạn candidate theo difficulty \\
+Search dễ timeout & Dùng iterative deepening và time limit \\
+AI có thể bỏ sót threat & Thêm immediate win/block, threat detection và regression tactical tests \\
+Evaluator khó cân bằng tấn công/phòng thủ & Tách pattern score, local score và reason classification để dễ debug \\
+Model có top-1 chưa cao & Chỉ dùng model làm advisor/prior, không hard-prune và không thay thế tactical rules \\
+Lần gọi model đầu chậm & Warm-up consultant model khi backend startup \\
+\bottomrule
+\end{longtable}
+
+\section{Kết Luận và Hướng Phát Triển}
+\label{sec:conclusion}
+
+Dự án đã xây dựng được một hệ thống Gomoku/Caro 15x15 hoàn chỉnh gồm frontend, backend, arena self-play và AI engine. Đóng góp chính nằm ở việc kết hợp classical AI search với tri thức miền của Gomoku: candidate generation, move ordering, threat detection, heuristic evaluation, alpha-beta pruning, iterative deepening và transposition table. Thành phần CNN consultant là phần mở rộng có giá trị báo cáo: nó cho thấy dữ liệu self-play có thể được dùng để học một policy prior, nhưng vẫn được tích hợp thận trọng để giữ tính ổn định của engine chính.
+
+Các hướng phát triển tiếp theo:
+
+\begin{enumerate}[leftmargin=*]
+  \item Mở rộng benchmark A/B thành nhiều ván self-play để so sánh engine không prior và engine có policy prior.
+  \item Mở rộng tactical benchmark suite cho broken-four, double-threat và các chuỗi forcing phức tạp.
+  \item Cải thiện evaluator cho các pattern Gomoku khó hơn.
+  \item Lưu best move trong transposition table để tăng hiệu quả move ordering.
+  \item Nghiên cứu Threat Space Search hoặc VCF solver tối giản.
+  \item Thử các kỹ thuật search nâng cao như killer move, history heuristic, PVS hoặc aspiration window.
+  \item Nâng chất lượng dữ liệu train và thử kiến trúc model mạnh hơn nếu muốn tăng vai trò của neural advisor.
+\end{enumerate}
+
+\appendix
+
+\section{Phụ Lục: Lệnh Kiểm Tra}
+
+\begin{lstlisting}[language={}]
+.\backend\venv\Scripts\python.exe -m py_compile backend\ai_types.py backend\board_rules.py backend\threats.py backend\evaluator.py backend\move_ordering.py backend\ai_core.py backend\main.py arena\engine.py arena\run_arena.py dl\model.py dl\predict_policy.py
+
+.\backend\venv\Scripts\python.exe -m unittest tests.test_policy_prior_ordering tests.test_tactical_cases tests.test_consultant_api -v
+
+.\backend\venv\Scripts\python.exe -m arena.run_arena --games 1 --depth 1 --candidate-radius 1 --candidate-limit 4 --max-moves 6 --no-save
+\end{lstlisting}
+
+\section{Phụ Lục: Response API Mẫu}
+
+\begin{lstlisting}[language={}]
 {
   "row": 7,
-  "col": 8,
-  "evaluation": 120,
-  "reason": "creating_open_four",
+  "col": 9,
+  "evaluation": 9830013,
+  "reason": "blocking_win",
   "difficulty": "medium",
-  "completed_depth": 2,
+  "completed_depth": 0,
   "message": "Move generated successfully."
 }
 \end{lstlisting}
 
-\subsection{Difficulty}
+\section{Phụ Lục: Ghi Chú Nộp Bài}
 
-Các mức độ được cấu hình trong \texttt{backend/main.py}:
-
-\begin{table}[H]
-\centering
-\begin{tabular}{lrrrr}
-\toprule
-\textbf{Difficulty} & \textbf{Depth} & \textbf{Radius} & \textbf{Candidate limit} & \textbf{Time limit} \\
-\midrule
-Easy & 2 & 2 & 8 & 400 ms \\
-Medium & 3 & 2 & 10 & 1200 ms \\
-Hard & 4 & 3 & 12 & 2200 ms \\
-\bottomrule
-\end{tabular}
-\caption{Cấu hình search theo difficulty.}
-\end{table}
-
-Easy ưu tiên tốc độ; Medium cân bằng giữa tốc độ và chất lượng; Hard cho phép tìm sâu hơn nhưng có thể chậm hơn trên môi trường cloud miễn phí.
-
-\section{Phương pháp AI}
-\label{sec:method}
-
-\subsection{Định hướng}
-
-Dự án không đặt mục tiêu vượt các engine Gomoku cấp thi đấu. Mục tiêu là minh họa cách kết hợp các kỹ thuật AI cổ điển với tri thức miền của Gomoku để tạo ra một tác tử có thể chơi được, phản hồi trong thời gian tương tác và giải thích được quyết định. Các thành phần chính gồm:
-
-\begin{itemize}[leftmargin=*]
-  \item Minimax và alpha-beta pruning.
-  \item Iterative deepening với time limit.
-  \item Candidate move generation để giảm branching factor.
-  \item Move ordering để tăng hiệu quả alpha-beta.
-  \item Immediate win/block để xử lý lỗi chiến thuật một lượt.
-  \item Threat detection cho open-four, closed-four, open-three, broken-three, double-threat.
-  \item Pattern-based evaluator theo hướng \texttt{AttackScore - DefenseScore}.
-  \item Zobrist hashing và transposition table để giảm tính toán lặp.
-\end{itemize}
-
-\fillplaceholder{Người 1 cần bổ sung: tóm tắt AI theo cách hiểu cá nhân}
-{Viết thêm 1 đoạn 5--7 câu ngay sau khung này: AI nhận board như thế nào, vì sao phải có candidate pruning, khi nào AI trả \texttt{winning\_move}/\texttt{blocking\_win}, và ý nghĩa của \texttt{reason}, \texttt{evaluation}, \texttt{completed\_depth}. Đoạn này nên viết bằng lời của người thuyết trình, không cần quá học thuật.}
-
-\subsection{Candidate move generation}
-
-Trên bàn 15x15, xét toàn bộ ô trống là quá tốn kém. Vì vậy, AI chỉ sinh các nước ứng viên quanh các quân đã đánh, trong bán kính được cấu hình bởi \texttt{candidate\_radius}. Cách này dựa trên quan sát thực tế: các nước có ý nghĩa chiến thuật thường nằm gần vùng đang tranh chấp. Sau khi sinh ứng viên, engine giới hạn số nước bằng \texttt{candidate\_limit}. Đây là bước quan trọng để giảm branching factor trước khi minimax bắt đầu.
-
-\subsection{Move ordering}
-
-Alpha-beta pruning hiệu quả hơn nếu các nước mạnh được xét trước. Dự án sắp xếp nước đi theo nhiều tín hiệu:
-
-\begin{itemize}[leftmargin=*]
-  \item Nước thắng ngay.
-  \item Nước chặn đối thủ thắng.
-  \item Nước tạo hoặc chặn open-four/closed-four.
-  \item Nước tạo hoặc chặn open-three/broken-three.
-  \item Local shape score quanh ô vừa thử.
-  \item Threat score dựa trên \texttt{ThreatSummary}.
-\end{itemize}
-
-Move ordering không thay đổi tính đúng đắn của minimax ở tập ứng viên đã chọn, nhưng giúp tìm được pruning sớm hơn và tăng cơ hội hoàn thành depth trong time limit.
-
-\subsection{Threat detection và evaluator}
-
-Threat detection được cài trong \texttt{backend/threats.py}. Bộ nhận diện threat đọc các line theo bốn hướng: ngang, dọc, chéo chính, chéo phụ. Các mẫu quan trọng gồm five, open-four, closed-four, open-three, broken-three và double-threat.
-
-Evaluator trong \texttt{backend/evaluator.py} chấm điểm board bằng cách kết hợp điểm tấn công và phòng thủ:
-
-\[
-Score(board) = AttackScore(board, AI) - DefenseScore(board, Human)
-\]
-
-Trong đó, threat mạnh như open-four hoặc double-threat được cho điểm cao hơn threat yếu. Cách thiết kế này giúp AI không chỉ tìm nước tấn công mà còn phản ứng với nguy cơ của đối thủ.
-
-\subsection{Immediate win/block}
-
-Trước khi search sâu, AI kiểm tra hai trường hợp đơn giản nhưng rất quan trọng:
-
-\begin{enumerate}[leftmargin=*]
-  \item AI có nước thắng ngay hay không.
-  \item Người chơi có nước thắng ngay cần bị chặn hay không.
-\end{enumerate}
-
-Nếu có, AI trả kết quả ngay với \texttt{reason} như \texttt{winning\_move} hoặc \texttt{blocking\_win}. Điều này làm giảm các lỗi chiến thuật rõ ràng, ví dụ bỏ qua việc chặn bốn quân liên tiếp.
-
-\subsection{Iterative deepening và time limit}
-
-Thay vì cố định một độ sâu duy nhất, AI tìm lần lượt từ depth thấp đến depth cao. Nếu hết thời gian, engine vẫn có thể trả nước tốt nhất đã biết. Trường \texttt{completed\_depth} cho biết độ sâu cao nhất đã hoàn thành trong lượt đó. Đây là một điểm quan trọng khi demo vì nó cho thấy trade-off giữa độ sâu search và thời gian phản hồi.
-
-\subsection{Zobrist hashing và transposition table}
-
-Zobrist hashing ánh xạ board thành một khóa hash. Transposition table lưu lại kết quả đã tìm kiếm cho các trạng thái đã gặp, có tính đến side-to-move. Cách này giảm số lần đánh giá lặp khi cùng một trạng thái có thể đạt được từ nhiều thứ tự nước đi khác nhau. Trong phiên bản hiện tại, transposition table còn lưu best move để hỗ trợ move ordering khi gặp lại trạng thái.
-
-\subsection{Forcing search giới hạn}
-
-Dự án đã có cơ chế threat extension và forcing search ở mức giới hạn để ưu tiên các chuỗi nước ép buộc ngắn. Phần này giúp AI xử lý tốt hơn một số tình huống tạo open-four hoặc phản ứng với threat nguy hiểm. Tuy nhiên, cần nhấn mạnh rằng đây chưa phải full Threat Space Search hoặc full VCF solver theo chuẩn engine Gomoku chuyên nghiệp.
-
-\subsection{Minh chứng tactical demo do Người 1 bổ sung}
-
-Phần này để người phụ trách AI điền bằng chứng thực tế từ frontend hoặc Swagger. Mỗi case nên có board setup, nước AI chọn và reason trả về. Nếu có ảnh, lưu ảnh vào thư mục \texttt{docs/report\_images/} hoặc ghi link ảnh trong bảng.
-
-\fillplaceholder{Người 1 cần bổ sung: bảng tactical demo}
-{Thay các ô \todo{...} trong bảng dưới bằng kết quả thật. Tối thiểu cần 3 case: AI thắng ngay, AI chặn người chơi thắng, AI tạo threat/open-four/double-threat.}
-
-\begin{table}[H]
-\centering
-\small
-\begin{tabularx}{\textwidth}{p{0.15\textwidth}X p{0.14\textwidth}p{0.15\textwidth}p{0.16\textwidth}}
-\toprule
-\textbf{Case} & \textbf{Board setup / cách tái hiện} & \textbf{Difficulty} & \textbf{AI move} & \textbf{Reason} \\
-\midrule
-AI thắng ngay & \todo{Mô tả 4 quân AI liên tiếp và ô thắng} & \todo{Medium} & \todo{[r,c]} & \todo{winning\_move} \\
-AI chặn thắng & \todo{Mô tả 4 quân người chơi liên tiếp} & \todo{Medium} & \todo{[r,c]} & \todo{blocking\_win} \\
-AI tạo threat & \todo{Mô tả thế tạo open-four/double-threat} & \todo{Medium/Hard} & \todo{[r,c]} & \todo{creating\_open\_four hoặc creating\_double\_threat} \\
-\bottomrule
-\end{tabularx}
-\caption{Bảng tactical demo cần Người 1 hoàn thiện bằng kết quả thực tế.}
-\end{table}
-
-\fillplaceholder{Người 1 cần bổ sung: nhận xét}
-{Viết 3--5 câu giải thích: case nào thể hiện immediate win/block, case nào thể hiện threat-aware evaluation, và case nào AI còn hạn chế hoặc cần cải thiện. Nếu AI chọn \texttt{best\_search\_score} thay vì reason chiến thuật rõ ràng, cần giải thích đây là kết quả của search/evaluator.}
-
-\section{Chức năng chính}
-
-\subsection{Play Vs AI}
-
-Người chơi có thể chơi trực tiếp với AI trên bàn 15x15, chọn difficulty và xem thông tin giải thích nước đi. Các trường debug như \texttt{reason}, \texttt{evaluation}, \texttt{completed\_depth} và elapsed time hỗ trợ việc thuyết trình, vì người xem không chỉ thấy AI đánh mà còn thấy một phần quá trình ra quyết định.
-
-\subsection{Arena Self-Play}
-
-Arena cho phép hai AI tự đấu. Mục đích chính là:
-
-\begin{itemize}[leftmargin=*]
-  \item Trình diễn self-play.
-  \item Sinh sample JSONL cho phân tích hoặc hướng phát triển học máy sau này.
-  \item Kiểm tra tính ổn định của engine khi chạy nhiều lượt liên tiếp.
-\end{itemize}
-
-Khi deploy online, frontend gửi \texttt{save\_to\_disk=false} để tránh ghi file dataset vào filesystem tạm thời của Render. Khi chạy local, nhóm vẫn có thể dùng CLI \texttt{arena.run\_arena} để xuất JSONL.
-
-\section{Triển khai online}
-
-Dự án được chuẩn bị để deploy theo mô hình:
-
-\begin{itemize}[leftmargin=*]
-  \item Frontend React/Vite trên Vercel.
-  \item Backend FastAPI người-máy trên Render.
-  \item Arena FastAPI service trên Render.
-\end{itemize}
-
-\subsection{Cấu hình Render}
-
-File \texttt{render.yaml} định nghĩa hai web service:
-
-\begin{lstlisting}
-gomoku-ai-backend:
-  rootDir: backend
-  buildCommand: pip install -r requirements.txt
-  startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
-  healthCheckPath: /api/health
-
-gomoku-ai-arena:
-  buildCommand: pip install -r backend/requirements.txt
-  startCommand: uvicorn arena.service:app --host 0.0.0.0 --port $PORT
-  healthCheckPath: /arena/api/health
-\end{lstlisting}
-
-\subsection{Cấu hình Vercel}
-
-Frontend đọc API base URL thông qua biến môi trường:
-
-\begin{lstlisting}
-VITE_API_BASE_URL=https://<render-backend-url>
-VITE_ARENA_API_BASE_URL=https://<render-arena-url>
-\end{lstlisting}
-
-Backend và arena đọc \texttt{FRONTEND\_ORIGINS} để cấu hình CORS:
-
-\begin{lstlisting}
-FRONTEND_ORIGINS=https://<vercel-frontend-url>
-\end{lstlisting}
-
-Nhờ đó, hệ thống không hard-code URL trong source code và có thể chuyển giữa local, staging hoặc production.
-
-\section{Phần mềm, thư viện và dữ liệu sử dụng}
-\label{sec:reuse}
-
-\subsection{Thư viện}
-
-\begin{table}[H]
-\centering
-\begin{tabularx}{\textwidth}{lX}
-\toprule
-\textbf{Thành phần} & \textbf{Mục đích sử dụng} \\
-\midrule
-Python & Cài đặt AI core, backend và arena. \\
-FastAPI & Xây dựng REST API cho chế độ người-máy và arena. \\
-Pydantic & Validate request/response schema. \\
-Uvicorn & ASGI server để chạy FastAPI. \\
-React & Xây dựng UI tương tác. \\
-Vite & Dev server và build tool cho frontend. \\
-Vercel & Deploy frontend public. \\
-Render & Deploy backend và arena API. \\
-\bottomrule
-\end{tabularx}
-\caption{Các công nghệ và thư viện chính.}
-\end{table}
-
-\subsection{Dữ liệu}
-
-AI hiện tại không dùng dataset bên ngoài để huấn luyện. Engine là classical search engine. Dữ liệu JSONL trong \texttt{arena/data/} và fixture trong \texttt{tests/fixtures/} phục vụ phân tích, benchmark và kiểm thử. Nếu phát triển tiếp theo hướng learning-based, dữ liệu self-play có thể trở thành nguồn dữ liệu ban đầu.
-
-\subsection{Phương pháp có sẵn được khai thác}
-
-Dự án khai thác các phương pháp AI cổ điển đã biết: minimax, alpha-beta pruning, iterative deepening, heuristic evaluation, transposition table và Zobrist hashing. Đóng góp của nhóm nằm ở việc tích hợp các phương pháp đó vào bài toán Gomoku 15x15, bổ sung tri thức threat của Gomoku, thiết kế API/UX để demo được lý do AI chọn nước đi, và xây dựng benchmark nội bộ để kiểm tra tactical correctness.
-
-\section{Thực nghiệm và đánh giá}
-\label{sec:experiments}
-
-\fillplaceholder{Người 3 cần bổ sung: quy trình chạy thực nghiệm}
-{Trước khi nộp, chạy lại các lệnh build/test/benchmark nếu có thể. Ghi ngày chạy, máy hoặc môi trường chạy, commit hash, và liệu benchmark chạy local hay trên API deploy. Nếu dùng lại \texttt{benchmark\_results.json} hiện có thì ghi rõ đây là benchmark nội bộ đã có trong repo.}
-
-\begin{table}[H]
-\centering
-\begin{tabularx}{\textwidth}{p{0.23\textwidth}p{0.18\textwidth}X}
-\toprule
-\textbf{Hạng mục kiểm tra} & \textbf{Kết quả} & \textbf{Ghi chú / bằng chứng} \\
-\midrule
-Python compile check & \todo{PASS/FAIL} & \todo{Điền lệnh đã chạy và ảnh/log nếu có} \\
-Frontend build & \todo{PASS/FAIL} & \todo{Điền thời gian hoặc output chính} \\
-Arena smoke test & \todo{PASS/FAIL} & \todo{Điền số game/samples} \\
-UI Play Vs AI & \todo{PASS/FAIL} & \todo{Điền ảnh minh chứng} \\
-UI Arena Self-Play & \todo{PASS/FAIL} & \todo{Điền ảnh minh chứng} \\
-\bottomrule
-\end{tabularx}
-\caption{Bảng kiểm thử cần Người 3 hoàn thiện trước khi nộp.}
-\end{table}
-
-\subsection{Thiết kế benchmark}
-
-Benchmark được chạy bằng file \texttt{benchmark\_ai.py}, kết quả lưu tại \texttt{benchmark\_results.json}. Bộ benchmark so sánh AI của dự án với một số baseline nội bộ:
-
-\begin{itemize}[leftmargin=*]
-  \item \texttt{random\_baseline}: chọn ngẫu nhiên một nước hợp lệ.
-  \item \texttt{center\_first\_baseline}: ưu tiên trung tâm hoặc ô gần trung tâm.
-  \item \texttt{greedy\_1ply\_baseline}: chọn nước có evaluation tốt nhất ở một lượt.
-  \item \texttt{basic\_minimax\_baseline}: minimax nông độ sâu 2.
-  \item \texttt{project\_easy}, \texttt{project\_medium}, \texttt{project\_hard}: AI của dự án theo ba cấu hình difficulty.
-\end{itemize}
-
-Các case tập trung vào yêu cầu chiến thuật cơ bản: khai cuộc trung tâm, AI thắng ngay theo hàng ngang/chéo, chặn open-four, chặn broken-four và các threat cơ bản. Đây là benchmark nội bộ, chưa phải so sánh với engine ngoài hoặc SOTA.
-
-\fillplaceholder{Người 3 cần bổ sung: thông tin benchmark cuối cùng}
-{Điền thêm ngày chạy benchmark, commit hash, môi trường chạy và lệnh chạy. Nếu số liệu mới khác bảng bên dưới, thay bảng accuracy và bảng case tiêu biểu bằng kết quả mới.}
-
-\begin{itemize}[leftmargin=*]
-  \item \textbf{Ngày chạy benchmark:} \todo{Điền ngày}.
-  \item \textbf{Commit hash:} \todo{Điền commit}.
-  \item \textbf{Môi trường chạy:} \todo{Local/Render/API deploy, cấu hình máy nếu có}.
-  \item \textbf{Lệnh chạy:} \todo{Ví dụ: \texttt{.\textbackslash backend\textbackslash venv\textbackslash Scripts\textbackslash python.exe benchmark\_ai.py}}.
-\end{itemize}
-
-\subsection{Độ chính xác theo agent}
-
-\begin{table}[H]
-\centering
-\begin{tabular}{lrrr}
-\toprule
-\textbf{Agent} & \textbf{Đúng} & \textbf{Tổng} & \textbf{Accuracy} \\
-\midrule
-random\_baseline & 0 & 8 & 0.00 \\
-center\_first\_baseline & 4 & 8 & 0.50 \\
-greedy\_1ply\_baseline & 6 & 8 & 0.75 \\
-basic\_minimax\_baseline & 8 & 8 & 1.00 \\
-project\_easy & 8 & 8 & 1.00 \\
-project\_medium & 8 & 8 & 1.00 \\
-project\_hard & 8 & 8 & 1.00 \\
-\bottomrule
-\end{tabular}
-\caption{Accuracy trên bộ tactical benchmark nội bộ.}
-\end{table}
-
-Kết quả cho thấy các cấu hình của dự án xử lý đúng toàn bộ case trong benchmark hiện tại. Tuy nhiên, kết quả này cần được hiểu đúng phạm vi: bộ case được thiết kế để kiểm tra tactical correctness cơ bản, chưa đủ để kết luận AI mạnh hơn các engine chuyên dụng.
-
-\subsection{Một số case tiêu biểu}
-
-\begin{table}[H]
-\centering
-\small
-\begin{tabularx}{\textwidth}{l l l l r r}
-\toprule
-\textbf{Case} & \textbf{Agent} & \textbf{Move} & \textbf{Reason} & \textbf{Depth} & \textbf{Time} \\
-\midrule
-opening & project\_easy & [7,7] & opening\_center & 0 & 0.06 ms \\
-opening & project\_medium & [7,7] & opening\_center & 0 & 0.05 ms \\
-opening & project\_hard & [7,7] & opening\_center & 0 & 0.04 ms \\
-ai\_win\_horizontal & project\_easy & [7,9] & winning\_move & 0 & 7.63 ms \\
-ai\_win\_horizontal & project\_medium & [7,9] & winning\_move & 0 & 7.70 ms \\
-ai\_win\_horizontal & project\_hard & [7,9] & winning\_move & 0 & 7.51 ms \\
-diagonal\_win & project\_easy & [8,8] & winning\_move & 0 & 18.21 ms \\
-diagonal\_win & project\_medium & [8,8] & winning\_move & 0 & 18.37 ms \\
-diagonal\_win & project\_hard & [8,8] & winning\_move & 0 & 17.50 ms \\
-\bottomrule
-\end{tabularx}
-\caption{Các case benchmark tiêu biểu từ \texttt{benchmark\_results.json}.}
-\end{table}
-
-Các case có \texttt{completed\_depth=0} không có nghĩa AI không hoạt động. Với các tình huống thắng ngay hoặc khai cuộc, engine có luật xử lý nhanh trước search sâu, vì vậy có thể trả kết quả ngay với \texttt{reason} rõ ràng.
-
-\fillplaceholder{Người 3 cần bổ sung: benchmark Easy/Medium/Hard cuối cùng}
-{Bảng trên là số liệu tạm từ file hiện có. Người 3 cần xác nhận hoặc thay bằng bảng cuối cùng gồm ít nhất 2 case cho 3 difficulty: immediate win và immediate block. Nếu có thời gian, thêm broken-four hoặc open-four.}
-
-\begin{table}[H]
-\centering
-\small
-\begin{tabularx}{\textwidth}{p{0.14\textwidth}p{0.18\textwidth}p{0.14\textwidth}p{0.2\textwidth}r r p{0.11\textwidth}}
-\toprule
-\textbf{Difficulty} & \textbf{Case} & \textbf{Move} & \textbf{Reason} & \textbf{Depth} & \textbf{Time} & \textbf{Đúng?} \\
-\midrule
-Easy & Immediate win & \todo{[r,c]} & \todo{winning\_move} & \todo{0} & \todo{ms} & \todo{Có} \\
-Easy & Immediate block & \todo{[r,c]} & \todo{blocking\_win} & \todo{0} & \todo{ms} & \todo{Có} \\
-Medium & Immediate win & \todo{[r,c]} & \todo{winning\_move} & \todo{0} & \todo{ms} & \todo{Có} \\
-Medium & Immediate block & \todo{[r,c]} & \todo{blocking\_win} & \todo{0} & \todo{ms} & \todo{Có} \\
-Hard & Immediate win & \todo{[r,c]} & \todo{winning\_move} & \todo{0} & \todo{ms} & \todo{Có} \\
-Hard & Immediate block & \todo{[r,c]} & \todo{blocking\_win} & \todo{0} & \todo{ms} & \todo{Có} \\
-\bottomrule
-\end{tabularx}
-\caption{Bảng benchmark cuối cùng cần Người 3 hoàn thiện.}
-\end{table}
-
-\fillplaceholder{Người 3 cần bổ sung: nhận xét benchmark/UI}
-{Viết 5--7 câu trả lời các ý sau: Easy/Medium/Hard khác nhau thế nào về thời gian và completed depth; Medium có phù hợp demo hơn Hard không; UI có hiển thị đủ reason/evaluation/completed depth không; Arena replay có chạy ổn không; benchmark này độc lập với deploy như thế nào.}
-
-\subsection{Đánh giá theo tiêu chí chấm}
-
-\begin{longtable}{p{0.26\textwidth}p{0.35\textwidth}p{0.29\textwidth}}
-\toprule
-\textbf{Tiêu chí} & \textbf{Bằng chứng trong dự án} & \textbf{Nhận xét} \\
-\midrule
-Mức độ phức tạp của bài toán & Gomoku 15x15, branching factor lớn, cần search có pruning. & Cao hơn tic-tac-toe 3x3; cần heuristic và giới hạn ứng viên. \\
-Chất lượng phương pháp AI & Minimax/alpha-beta, iterative deepening, threat detection, evaluator, TT. & Phù hợp mục tiêu classical AI explainable. \\
-Chất lượng hệ thống & React/Vite frontend, FastAPI backend, arena API, deploy public. & Có thể demo online, không chỉ chạy local. \\
-Chất lượng benchmark & Benchmark JSON, so sánh baseline nội bộ và 3 difficulty. & Có số liệu nhưng chưa so với engine ngoài. \\
-Chất lượng trình bày & UI hiển thị reason, evaluation, completed depth. & Thuận lợi cho thuyết trình và giải thích AI. \\
-\bottomrule
-\end{longtable}
-
-\section{Khó khăn và cách vượt qua}
-\label{sec:difficulties}
-
-\subsection{Không gian tìm kiếm lớn}
-
-Khó khăn chính là branching factor của bàn 15x15. Nếu xét mọi ô trống, minimax nhanh chóng trở nên không khả thi. Nhóm xử lý bằng candidate generation quanh các quân đã có, candidate limit, move ordering và alpha-beta pruning.
-
-\subsection{Cân bằng tốc độ và chất lượng}
-
-AI cần phản hồi nhanh trên UI nhưng vẫn đủ mạnh để không bỏ qua threat cơ bản. Nhóm dùng iterative deepening và time limit, đồng thời chia difficulty thành Easy/Medium/Hard. Khi demo, Medium là cấu hình cân bằng; Hard có thể dùng khi môi trường đủ mạnh.
-
-\subsection{Threat detection không đơn giản}
-
-Các mẫu như broken-four và double-threat dễ bị bỏ sót nếu chỉ đếm quân liên tiếp. Nhóm tách \texttt{ThreatDetector} thành module riêng và đưa threat score vào cả evaluator lẫn move ordering. Dù vậy, hệ thống hiện vẫn là pattern-based, chưa bao phủ mọi thế cờ phức tạp.
-
-\subsection{Deploy full-stack}
-
-Frontend và backend chạy ở hai domain khác nhau nên cần cấu hình environment variables và CORS. Nhóm thêm \texttt{render.yaml}, \texttt{DEPLOYMENT.md}, \texttt{VITE\_API\_BASE\_URL}, \texttt{VITE\_ARENA\_API\_BASE\_URL} và \texttt{FRONTEND\_ORIGINS} để tách cấu hình khỏi source code.
-
-\section{So sánh và giới hạn}
-
-Dự án nên được so sánh theo hướng phương pháp, không theo tuyên bố sức mạnh tuyệt đối. Basic minimax đơn giản dễ hiểu nhưng chậm hoặc yếu khi bàn cờ lớn. AI của dự án bổ sung alpha-beta, candidate pruning, move ordering, threat detection, evaluator, iterative deepening và cache. Các engine mạnh như Rapfi hoặc Yixin có nhiều tối ưu sâu hơn và không phải đối tượng mà dự án hiện tại đã tích hợp để so sánh trực tiếp. Các hướng AlphaZero-Gomoku dùng MCTS và neural network/self-play training, trong khi dự án này chủ động chọn classical search để phù hợp phạm vi học phần và khả năng giải thích.
-
-Giới hạn hiện tại:
-
-\begin{itemize}[leftmargin=*]
-  \item Chưa có full Threat Space Search hoặc full VCF solver.
-  \item Chưa tích hợp engine ngoài để benchmark đối đầu.
-  \item Chưa có reinforcement learning hoặc neural network training.
-  \item Search vẫn phụ thuộc vào time limit và candidate pruning.
-  \item Một số double-threat phức tạp có thể chưa được đánh giá hoàn chỉnh.
-\end{itemize}
-
-\section{Phân công nhóm}
-
-Nhóm có thể chia việc theo hướng cân bằng như file \texttt{TEAM\_TASK\_CHECKLIST.md}:
-
-\begin{table}[H]
-\centering
-\begin{tabularx}{\textwidth}{lX}
-\toprule
-\textbf{Thành viên} & \textbf{Nhiệm vụ chính} \\
-\midrule
-A & AI core và tactical demo: giải thích thuật toán, reason, evaluator, tạo case AI thắng/chặn/threat. \\
-B & Tích hợp hệ thống, deploy và API validation: Vercel, Render, env/CORS, Swagger contract, API smoke test, latency online. \\
-C & Benchmark, kiểm thử và UI: chạy build/test, benchmark Easy/Medium/Hard, kiểm tra UI Play/Arena, đánh giá kết quả. \\
-Người viết report & Tổng hợp nội dung, đối chiếu tiêu chí, chuẩn bị PDF và slide. \\
-\bottomrule
-\end{tabularx}
-\caption{Phân công đề xuất để đảm bảo mỗi thành viên có đóng góp kỹ thuật và minh chứng.}
-\end{table}
-
-\section{Kết luận và hướng phát triển}
-\label{sec:conclusion}
-
-Dự án đã xây dựng một hệ thống Gomoku/Caro 15x15 hoàn chỉnh từ AI core đến giao diện và deploy public. Về AI, hệ thống thể hiện các kỹ thuật classical game AI quan trọng: minimax, alpha-beta pruning, iterative deepening, candidate pruning, move ordering, threat detection, heuristic evaluation, Zobrist hashing và transposition table. Về hệ thống, frontend React/Vite, backend FastAPI và arena service cho phép demo cả chế độ người chơi với AI lẫn self-play. Benchmark nội bộ cho thấy AI xử lý đúng các case chiến thuật cơ bản và có khả năng giải thích nước đi thông qua \texttt{reason}.
-
-Hướng phát triển tiếp theo:
-
-\begin{enumerate}[leftmargin=*]
-  \item Mở rộng tactical benchmark suite với nhiều double-threat và broken-four phức tạp hơn.
-  \item Cải thiện evaluator cho các mẫu bị gián đoạn và thế ép buộc dài.
-  \item Hoàn thiện Threat Space Search hoặc VCF solver tối thiểu.
-  \item Thêm killer move/history heuristic, PVS hoặc aspiration window nếu tiếp tục tối ưu classical search.
-  \item Tích hợp benchmark với engine ngoài để có đánh giá khách quan hơn.
-  \item Khai thác dữ liệu arena self-play cho phân tích hoặc hướng học máy trong tương lai.
-\end{enumerate}
-
-\appendix
-\section{Lệnh chạy và kiểm tra}
-
-\subsection{Chạy backend}
-
-\begin{lstlisting}
-cd backend
-.\start_backend.ps1
-\end{lstlisting}
-
-\subsection{Chạy frontend}
-
-\begin{lstlisting}
-cd frontend
-npm install
-npm.cmd run dev
-\end{lstlisting}
-
-\subsection{Chạy benchmark}
-
-\begin{lstlisting}
-.\backend\venv\Scripts\python.exe benchmark_ai.py
-\end{lstlisting}
-
-\subsection{Build frontend}
-
-\begin{lstlisting}
-cd frontend
-npm.cmd run build
-\end{lstlisting}
-
-\subsection{Compile Python}
-
-\begin{lstlisting}
-.\backend\venv\Scripts\python.exe -m py_compile backend\ai_types.py backend\board_rules.py backend\threats.py backend\evaluator.py backend\move_ordering.py backend\ai_core.py backend\main.py arena\engine.py arena\run_arena.py arena\service.py
-\end{lstlisting}
-
-\section{Ghi chú biên dịch LaTeX}
-
-File này dùng Unicode tiếng Việt và font hệ thống, nên nên biên dịch bằng XeLaTeX hoặc LuaLaTeX:
-
-\begin{lstlisting}
-xelatex REPORT_BTL.tex
-xelatex REPORT_BTL.tex
-\end{lstlisting}
-
-Nếu máy không có font \texttt{Times New Roman}, có thể đổi dòng \texttt{\textbackslash setmainfont\{Times New Roman\}} thành một font Unicode khác như \texttt{Arial}, \texttt{TeX Gyre Termes} hoặc font mặc định có sẵn trong bộ TeX.
+Trước khi nộp, nhóm nên điền tên thành viên, tên học phần, giảng viên và link demo nếu có. Nếu biên dịch PDF, nên dùng XeLaTeX hoặc LuaLaTeX vì file dùng \texttt{fontspec} và tiếng Việt Unicode.
 
 \end{document}

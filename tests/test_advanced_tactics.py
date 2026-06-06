@@ -48,6 +48,26 @@ class AdvancedTacticsTest(unittest.TestCase):
             with self.subTest(line=line):
                 self.assertGreaterEqual(detector.summarize_line(line).closed_four, 1)
 
+    def test_blocked_three_shapes_are_not_forcing_threats(self) -> None:
+        detector = ThreatDetector()
+
+        for line in ("2011102", "2110102", "2011012", "2101102"):
+            with self.subTest(line=line):
+                summary = detector.summarize_line(line)
+                self.assertEqual(summary.open_three, 0)
+                self.assertEqual(summary.broken_three, 0)
+                self.assertEqual(summary.double_threat, 0)
+
+    def test_single_jump_open_three_is_not_double_counted(self) -> None:
+        detector = ThreatDetector()
+
+        for line in ("011010", "010110"):
+            with self.subTest(line=line):
+                summary = detector.summarize_line(line)
+                self.assertEqual(summary.open_three, 1)
+                self.assertEqual(summary.broken_three, 0)
+                self.assertEqual(summary.double_threat, 0)
+
     def test_ai_creates_double_open_three(self) -> None:
         board = create_ai_double_three_board()
 

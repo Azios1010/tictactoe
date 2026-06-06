@@ -18,6 +18,8 @@ class SearchConfig:
     candidate_limit: int = 14
     time_limit_ms: int | None = 1200
     threat_extension_depth: int = 1
+    policy_prior_weight: int = 0
+    policy_prior_top_k: int = 24
 
 
 class SearchTimeout(Exception):

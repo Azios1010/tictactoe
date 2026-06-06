@@ -67,16 +67,8 @@ class ThreatDetector:
             lambda window: window.count("1") == 4 and window.count("0") == 1 and "2" not in window,
         )
         closed_four = max(0, four_windows - open_four * 2)
-        open_three = sum(padded.count(pattern) for pattern in ("01110", "010110", "011010"))
-        broken_three = sum(
-            padded.count(pattern)
-            for pattern in (
-                "01101",
-                "01011",
-                "11010",
-                "10110",
-            )
-        )
+        open_three = self._count_open_threes(padded)
+        broken_three = self._count_broken_threes(padded)
         return ThreatSummary(
             five=five,
             open_four=open_four,
@@ -87,6 +79,39 @@ class ThreatDetector:
 
     def _count_windows(self, line: str, size: int, predicate: Callable[[str], bool]) -> int:
         return sum(1 for index in range(0, len(line) - size + 1) if predicate(line[index : index + size]))
+
+    def _count_open_threes(self, padded: str) -> int:
+        count = 0
+        for index in range(0, len(padded) - 4):
+            window = padded[index : index + 5]
+            if window != "01110":
+                continue
+            left = padded[index - 1] if index > 0 else "2"
+            right = padded[index + 5] if index + 5 < len(padded) else "2"
+            if left == "0" or right == "0":
+                count += 1
+
+        count += self._count_windows(padded, 6, lambda window: window in {"010110", "011010"})
+        return count
+
+    def _count_broken_threes(self, padded: str) -> int:
+        patterns = {"01101", "01011", "11010", "10110"}
+        count = 0
+        for index in range(0, len(padded) - 4):
+            window = padded[index : index + 5]
+            if window not in patterns:
+                continue
+
+            left = padded[index - 1] if index > 0 else "2"
+            right = padded[index + 5] if index + 5 < len(padded) else "2"
+            if left != "0" and right != "0":
+                continue
+            if window in {"01101", "01011"} and right == "0":
+                continue
+            if window in {"11010", "10110"} and left == "0":
+                continue
+            count += 1
+        return count
 
     def _iter_line_strings(self, board: list[list[int]], player: int) -> Iterable[str]:
         for row in range(self.board_size):

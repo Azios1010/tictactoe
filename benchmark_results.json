@@ -17,7 +17,7 @@
       "score": 0,
       "reason": "random_legal_move_seeded",
       "completed_depth": 0,
-      "elapsed_ms": 0.05
+      "elapsed_ms": 0.06
     },
     {
       "case": "opening",
@@ -55,7 +55,7 @@
       "score": 0,
       "reason": "highest_1ply_evaluation",
       "completed_depth": 0,
-      "elapsed_ms": 1.41
+      "elapsed_ms": 2.12
     },
     {
       "case": "opening",
@@ -74,7 +74,7 @@
       "score": 0,
       "reason": "shallow_minimax_depth_2",
       "completed_depth": 0,
-      "elapsed_ms": 27.51
+      "elapsed_ms": 34.23
     },
     {
       "case": "opening",
@@ -93,7 +93,7 @@
       "score": 0,
       "reason": "opening_center",
       "completed_depth": 0,
-      "elapsed_ms": 0.06
+      "elapsed_ms": 0.07
     },
     {
       "case": "opening",
@@ -130,34 +130,34 @@
       "is_correct": true,
       "score": 0,
       "reason": "opening_center",
+      "completed_depth": 0,
+      "elapsed_ms": 0.05
+    },
+    {
+      "case": "ai_win_horizontal",
+      "agent": "random_baseline",
+      "move": [
+        2,
+        0
+      ],
+      "expected_moves": [
+        [
+          7,
+          4
+        ],
+        [
+          7,
+          9
+        ]
+      ],
+      "is_correct": false,
+      "score": 0,
+      "reason": "random_legal_move_seeded",
       "completed_depth": 0,
       "elapsed_ms": 0.04
     },
     {
       "case": "ai_win_horizontal",
-      "agent": "random_baseline",
-      "move": [
-        2,
-        0
-      ],
-      "expected_moves": [
-        [
-          7,
-          4
-        ],
-        [
-          7,
-          9
-        ]
-      ],
-      "is_correct": false,
-      "score": 0,
-      "reason": "random_legal_move_seeded",
-      "completed_depth": 0,
-      "elapsed_ms": 0.05
-    },
-    {
-      "case": "ai_win_horizontal",
       "agent": "center_first_baseline",
       "move": [
         6,
@@ -200,7 +200,7 @@
       "score": 0,
       "reason": "highest_1ply_evaluation",
       "completed_depth": 0,
-      "elapsed_ms": 29.38
+      "elapsed_ms": 36.28
     },
     {
       "case": "ai_win_horizontal",
@@ -223,7 +223,7 @@
       "score": 0,
       "reason": "shallow_minimax_depth_2",
       "completed_depth": 0,
-      "elapsed_ms": 467.99
+      "elapsed_ms": 557.84
     },
     {
       "case": "ai_win_horizontal",
@@ -246,7 +246,7 @@
       "score": Infinity,
       "reason": "winning_move",
       "completed_depth": 0,
-      "elapsed_ms": 7.63
+      "elapsed_ms": 8.3
     },
     {
       "case": "ai_win_horizontal",
@@ -269,7 +269,7 @@
       "score": Infinity,
       "reason": "winning_move",
       "completed_depth": 0,
-      "elapsed_ms": 7.7
+      "elapsed_ms": 8.48
     },
     {
       "case": "ai_win_horizontal",
@@ -292,7 +292,7 @@
       "score": Infinity,
       "reason": "winning_move",
       "completed_depth": 0,
-      "elapsed_ms": 7.51
+      "elapsed_ms": 8.01
     },
     {
       "case": "midgame",
@@ -306,7 +306,7 @@
       "score": 0,
       "reason": "random_legal_move_seeded",
       "completed_depth": 0,
-      "elapsed_ms": 0.05
+      "elapsed_ms": 0.04
     },
     {
       "case": "midgame",
@@ -327,42 +327,42 @@
       "agent": "greedy_1ply_baseline",
       "move": [
         6,
-        5
+        6
       ],
       "expected_moves": [],
       "is_correct": null,
       "score": 0,
       "reason": "highest_1ply_evaluation",
       "completed_depth": 0,
-      "elapsed_ms": 32.21
+      "elapsed_ms": 38.05
     },
     {
       "case": "midgame",
       "agent": "basic_minimax_baseline",
       "move": [
         6,
-        10
+        6
       ],
       "expected_moves": [],
       "is_correct": null,
       "score": 0,
       "reason": "shallow_minimax_depth_2",
       "completed_depth": 0,
-      "elapsed_ms": 565.98
+      "elapsed_ms": 643.13
     },
     {
       "case": "midgame",
       "agent": "project_easy",
       "move": [
         6,
-        10
+        6
       ],
       "expected_moves": [],
       "is_correct": null,
-      "score": -8930.0,
-      "reason": "creating_double_threat",
+      "score": 0.0,
+      "reason": "building_attack",
       "completed_depth": 2,
-      "elapsed_ms": 183.98
+      "elapsed_ms": 158.61
     },
     {
       "case": "midgame",
@@ -376,7 +376,7 @@
       "score": 103480.0,
       "reason": "building_attack",
       "completed_depth": 2,
-      "elapsed_ms": 1220.13
+      "elapsed_ms": 1211.72
     },
     {
       "case": "midgame",
@@ -390,7 +390,7 @@
       "score": 103480.0,
       "reason": "building_attack",
       "completed_depth": 2,
-      "elapsed_ms": 2224.75
+      "elapsed_ms": 2211.69
     },
     {
       "case": "block_open_four",
@@ -413,7 +413,7 @@
       "score": 0,
       "reason": "random_legal_move_seeded",
       "completed_depth": 0,
-      "elapsed_ms": 0.07
+      "elapsed_ms": 0.05
     },
     {
       "case": "block_open_four",
@@ -436,7 +436,7 @@
       "score": 0,
       "reason": "center_or_nearest_empty",
       "completed_depth": 0,
-      "elapsed_ms": 0.01
+      "elapsed_ms": 0.0
     },
     {
       "case": "block_open_four",
@@ -459,7 +459,7 @@
       "score": 0,
       "reason": "highest_1ply_evaluation",
       "completed_depth": 0,
-      "elapsed_ms": 56.85
+      "elapsed_ms": 38.8
     },
     {
       "case": "block_open_four",
@@ -482,7 +482,7 @@
       "score": 0,
       "reason": "shallow_minimax_depth_2",
       "completed_depth": 0,
-      "elapsed_ms": 948.99
+      "elapsed_ms": 605.8
     },
     {
       "case": "block_open_four",
@@ -505,7 +505,7 @@
       "score": 9830013.0,
       "reason": "blocking_win",
       "completed_depth": 0,
-      "elapsed_ms": 16.82
+      "elapsed_ms": 10.84
     },
     {
       "case": "block_open_four",
@@ -528,7 +528,7 @@
       "score": 9830013.0,
       "reason": "blocking_win",
       "completed_depth": 0,
-      "elapsed_ms": 17.34
+      "elapsed_ms": 10.68
     },
     {
       "case": "block_open_four",
@@ -551,7 +551,7 @@
       "score": 9830013.0,
       "reason": "blocking_win",
       "completed_depth": 0,
-      "elapsed_ms": 16.96
+      "elapsed_ms": 11.16
     },
     {
       "case": "block_broken_four",
@@ -570,7 +570,7 @@
       "score": 0,
       "reason": "random_legal_move_seeded",
       "completed_depth": 0,
-      "elapsed_ms": 0.06
+      "elapsed_ms": 0.04
     },
     {
       "case": "block_broken_four",
@@ -608,7 +608,7 @@
       "score": 0,
       "reason": "highest_1ply_evaluation",
       "completed_depth": 0,
-      "elapsed_ms": 58.68
+      "elapsed_ms": 38.74
     },
     {
       "case": "block_broken_four",
@@ -627,7 +627,7 @@
       "score": 0,
       "reason": "shallow_minimax_depth_2",
       "completed_depth": 0,
-      "elapsed_ms": 1058.71
+      "elapsed_ms": 644.6
     },
     {
       "case": "block_broken_four",
@@ -645,590 +645,590 @@
       "is_correct": true,
       "score": 9830515.0,
       "reason": "blocking_win",
+      "completed_depth": 0,
+      "elapsed_ms": 13.33
+    },
+    {
+      "case": "block_broken_four",
+      "agent": "project_medium",
+      "move": [
+        7,
+        7
+      ],
+      "expected_moves": [
+        [
+          7,
+          7
+        ]
+      ],
+      "is_correct": true,
+      "score": 9830515.0,
+      "reason": "blocking_win",
+      "completed_depth": 0,
+      "elapsed_ms": 11.53
+    },
+    {
+      "case": "block_broken_four",
+      "agent": "project_hard",
+      "move": [
+        7,
+        7
+      ],
+      "expected_moves": [
+        [
+          7,
+          7
+        ]
+      ],
+      "is_correct": true,
+      "score": 9830515.0,
+      "reason": "blocking_win",
+      "completed_depth": 0,
+      "elapsed_ms": 11.25
+    },
+    {
+      "case": "forcing_open_four",
+      "agent": "random_baseline",
+      "move": [
+        2,
+        0
+      ],
+      "expected_moves": [
+        [
+          6,
+          4
+        ],
+        [
+          6,
+          8
+        ]
+      ],
+      "is_correct": false,
+      "score": 0,
+      "reason": "random_legal_move_seeded",
+      "completed_depth": 0,
+      "elapsed_ms": 0.05
+    },
+    {
+      "case": "forcing_open_four",
+      "agent": "center_first_baseline",
+      "move": [
+        7,
+        7
+      ],
+      "expected_moves": [
+        [
+          6,
+          4
+        ],
+        [
+          6,
+          8
+        ]
+      ],
+      "is_correct": false,
+      "score": 0,
+      "reason": "center_or_nearest_empty",
+      "completed_depth": 0,
+      "elapsed_ms": 0.0
+    },
+    {
+      "case": "forcing_open_four",
+      "agent": "greedy_1ply_baseline",
+      "move": [
+        6,
+        4
+      ],
+      "expected_moves": [
+        [
+          6,
+          4
+        ],
+        [
+          6,
+          8
+        ]
+      ],
+      "is_correct": true,
+      "score": 0,
+      "reason": "highest_1ply_evaluation",
+      "completed_depth": 0,
+      "elapsed_ms": 36.76
+    },
+    {
+      "case": "forcing_open_four",
+      "agent": "basic_minimax_baseline",
+      "move": [
+        6,
+        4
+      ],
+      "expected_moves": [
+        [
+          6,
+          4
+        ],
+        [
+          6,
+          8
+        ]
+      ],
+      "is_correct": true,
+      "score": 0,
+      "reason": "shallow_minimax_depth_2",
+      "completed_depth": 0,
+      "elapsed_ms": 632.11
+    },
+    {
+      "case": "forcing_open_four",
+      "agent": "project_easy",
+      "move": [
+        6,
+        4
+      ],
+      "expected_moves": [
+        [
+          6,
+          4
+        ],
+        [
+          6,
+          8
+        ]
+      ],
+      "is_correct": true,
+      "score": 500000,
+      "reason": "creating_open_four",
+      "completed_depth": 0,
+      "elapsed_ms": 31.51
+    },
+    {
+      "case": "forcing_open_four",
+      "agent": "project_medium",
+      "move": [
+        6,
+        4
+      ],
+      "expected_moves": [
+        [
+          6,
+          4
+        ],
+        [
+          6,
+          8
+        ]
+      ],
+      "is_correct": true,
+      "score": 500000,
+      "reason": "creating_open_four",
+      "completed_depth": 0,
+      "elapsed_ms": 30.66
+    },
+    {
+      "case": "forcing_open_four",
+      "agent": "project_hard",
+      "move": [
+        6,
+        4
+      ],
+      "expected_moves": [
+        [
+          6,
+          4
+        ],
+        [
+          6,
+          8
+        ]
+      ],
+      "is_correct": true,
+      "score": 500000,
+      "reason": "creating_open_four",
+      "completed_depth": 0,
+      "elapsed_ms": 32.48
+    },
+    {
+      "case": "create_double_three",
+      "agent": "random_baseline",
+      "move": [
+        2,
+        0
+      ],
+      "expected_moves": [
+        [
+          7,
+          7
+        ]
+      ],
+      "is_correct": false,
+      "score": 0,
+      "reason": "random_legal_move_seeded",
+      "completed_depth": 0,
+      "elapsed_ms": 0.05
+    },
+    {
+      "case": "create_double_three",
+      "agent": "center_first_baseline",
+      "move": [
+        7,
+        7
+      ],
+      "expected_moves": [
+        [
+          7,
+          7
+        ]
+      ],
+      "is_correct": true,
+      "score": 0,
+      "reason": "center_or_nearest_empty",
+      "completed_depth": 0,
+      "elapsed_ms": 0.0
+    },
+    {
+      "case": "create_double_three",
+      "agent": "greedy_1ply_baseline",
+      "move": [
+        7,
+        7
+      ],
+      "expected_moves": [
+        [
+          7,
+          7
+        ]
+      ],
+      "is_correct": true,
+      "score": 0,
+      "reason": "highest_1ply_evaluation",
+      "completed_depth": 0,
+      "elapsed_ms": 42.75
+    },
+    {
+      "case": "create_double_three",
+      "agent": "basic_minimax_baseline",
+      "move": [
+        7,
+        7
+      ],
+      "expected_moves": [
+        [
+          7,
+          7
+        ]
+      ],
+      "is_correct": true,
+      "score": 0,
+      "reason": "shallow_minimax_depth_2",
+      "completed_depth": 0,
+      "elapsed_ms": 721.39
+    },
+    {
+      "case": "create_double_three",
+      "agent": "project_easy",
+      "move": [
+        7,
+        7
+      ],
+      "expected_moves": [
+        [
+          7,
+          7
+        ]
+      ],
+      "is_correct": true,
+      "score": 376015.0,
+      "reason": "creating_double_threat",
+      "completed_depth": 0,
+      "elapsed_ms": 15.64
+    },
+    {
+      "case": "create_double_three",
+      "agent": "project_medium",
+      "move": [
+        7,
+        7
+      ],
+      "expected_moves": [
+        [
+          7,
+          7
+        ]
+      ],
+      "is_correct": true,
+      "score": 376015.0,
+      "reason": "creating_double_threat",
+      "completed_depth": 0,
+      "elapsed_ms": 15.47
+    },
+    {
+      "case": "create_double_three",
+      "agent": "project_hard",
+      "move": [
+        7,
+        7
+      ],
+      "expected_moves": [
+        [
+          7,
+          7
+        ]
+      ],
+      "is_correct": true,
+      "score": 376015.0,
+      "reason": "creating_double_threat",
+      "completed_depth": 0,
+      "elapsed_ms": 15.88
+    },
+    {
+      "case": "block_double_three",
+      "agent": "random_baseline",
+      "move": [
+        2,
+        0
+      ],
+      "expected_moves": [
+        [
+          7,
+          7
+        ]
+      ],
+      "is_correct": false,
+      "score": 0,
+      "reason": "random_legal_move_seeded",
+      "completed_depth": 0,
+      "elapsed_ms": 0.05
+    },
+    {
+      "case": "block_double_three",
+      "agent": "center_first_baseline",
+      "move": [
+        7,
+        7
+      ],
+      "expected_moves": [
+        [
+          7,
+          7
+        ]
+      ],
+      "is_correct": true,
+      "score": 0,
+      "reason": "center_or_nearest_empty",
+      "completed_depth": 0,
+      "elapsed_ms": 0.0
+    },
+    {
+      "case": "block_double_three",
+      "agent": "greedy_1ply_baseline",
+      "move": [
+        8,
+        9
+      ],
+      "expected_moves": [
+        [
+          7,
+          7
+        ]
+      ],
+      "is_correct": false,
+      "score": 0,
+      "reason": "highest_1ply_evaluation",
+      "completed_depth": 0,
+      "elapsed_ms": 42.62
+    },
+    {
+      "case": "block_double_three",
+      "agent": "basic_minimax_baseline",
+      "move": [
+        7,
+        7
+      ],
+      "expected_moves": [
+        [
+          7,
+          7
+        ]
+      ],
+      "is_correct": true,
+      "score": 0,
+      "reason": "shallow_minimax_depth_2",
+      "completed_depth": 0,
+      "elapsed_ms": 723.33
+    },
+    {
+      "case": "block_double_three",
+      "agent": "project_easy",
+      "move": [
+        7,
+        7
+      ],
+      "expected_moves": [
+        [
+          7,
+          7
+        ]
+      ],
+      "is_correct": true,
+      "score": 188015.0,
+      "reason": "blocking_double_threat",
+      "completed_depth": 0,
+      "elapsed_ms": 15.41
+    },
+    {
+      "case": "block_double_three",
+      "agent": "project_medium",
+      "move": [
+        7,
+        7
+      ],
+      "expected_moves": [
+        [
+          7,
+          7
+        ]
+      ],
+      "is_correct": true,
+      "score": 188015.0,
+      "reason": "blocking_double_threat",
+      "completed_depth": 0,
+      "elapsed_ms": 14.82
+    },
+    {
+      "case": "block_double_three",
+      "agent": "project_hard",
+      "move": [
+        7,
+        7
+      ],
+      "expected_moves": [
+        [
+          7,
+          7
+        ]
+      ],
+      "is_correct": true,
+      "score": 188015.0,
+      "reason": "blocking_double_threat",
+      "completed_depth": 0,
+      "elapsed_ms": 15.66
+    },
+    {
+      "case": "diagonal_win",
+      "agent": "random_baseline",
+      "move": [
+        2,
+        0
+      ],
+      "expected_moves": [
+        [
+          3,
+          3
+        ],
+        [
+          8,
+          8
+        ]
+      ],
+      "is_correct": false,
+      "score": 0,
+      "reason": "random_legal_move_seeded",
+      "completed_depth": 0,
+      "elapsed_ms": 0.04
+    },
+    {
+      "case": "diagonal_win",
+      "agent": "center_first_baseline",
+      "move": [
+        6,
+        7
+      ],
+      "expected_moves": [
+        [
+          3,
+          3
+        ],
+        [
+          8,
+          8
+        ]
+      ],
+      "is_correct": false,
+      "score": 0,
+      "reason": "center_or_nearest_empty",
+      "completed_depth": 0,
+      "elapsed_ms": 0.0
+    },
+    {
+      "case": "diagonal_win",
+      "agent": "greedy_1ply_baseline",
+      "move": [
+        8,
+        8
+      ],
+      "expected_moves": [
+        [
+          3,
+          3
+        ],
+        [
+          8,
+          8
+        ]
+      ],
+      "is_correct": true,
+      "score": 0,
+      "reason": "highest_1ply_evaluation",
+      "completed_depth": 0,
+      "elapsed_ms": 38.84
+    },
+    {
+      "case": "diagonal_win",
+      "agent": "basic_minimax_baseline",
+      "move": [
+        8,
+        8
+      ],
+      "expected_moves": [
+        [
+          3,
+          3
+        ],
+        [
+          8,
+          8
+        ]
+      ],
+      "is_correct": true,
+      "score": 0,
+      "reason": "shallow_minimax_depth_2",
+      "completed_depth": 0,
+      "elapsed_ms": 605.61
+    },
+    {
+      "case": "diagonal_win",
+      "agent": "project_easy",
+      "move": [
+        8,
+        8
+      ],
+      "expected_moves": [
+        [
+          3,
+          3
+        ],
+        [
+          8,
+          8
+        ]
+      ],
+      "is_correct": true,
+      "score": Infinity,
+      "reason": "winning_move",
       "completed_depth": 0,
       "elapsed_ms": 18.53
     },
     {
-      "case": "block_broken_four",
-      "agent": "project_medium",
-      "move": [
-        7,
-        7
-      ],
-      "expected_moves": [
-        [
-          7,
-          7
-        ]
-      ],
-      "is_correct": true,
-      "score": 9830515.0,
-      "reason": "blocking_win",
-      "completed_depth": 0,
-      "elapsed_ms": 17.02
-    },
-    {
-      "case": "block_broken_four",
-      "agent": "project_hard",
-      "move": [
-        7,
-        7
-      ],
-      "expected_moves": [
-        [
-          7,
-          7
-        ]
-      ],
-      "is_correct": true,
-      "score": 9830515.0,
-      "reason": "blocking_win",
-      "completed_depth": 0,
-      "elapsed_ms": 19.91
-    },
-    {
-      "case": "forcing_open_four",
-      "agent": "random_baseline",
-      "move": [
-        2,
-        0
-      ],
-      "expected_moves": [
-        [
-          6,
-          4
-        ],
-        [
-          6,
-          8
-        ]
-      ],
-      "is_correct": false,
-      "score": 0,
-      "reason": "random_legal_move_seeded",
-      "completed_depth": 0,
-      "elapsed_ms": 0.07
-    },
-    {
-      "case": "forcing_open_four",
-      "agent": "center_first_baseline",
-      "move": [
-        7,
-        7
-      ],
-      "expected_moves": [
-        [
-          6,
-          4
-        ],
-        [
-          6,
-          8
-        ]
-      ],
-      "is_correct": false,
-      "score": 0,
-      "reason": "center_or_nearest_empty",
-      "completed_depth": 0,
-      "elapsed_ms": 0.0
-    },
-    {
-      "case": "forcing_open_four",
-      "agent": "greedy_1ply_baseline",
-      "move": [
-        6,
-        4
-      ],
-      "expected_moves": [
-        [
-          6,
-          4
-        ],
-        [
-          6,
-          8
-        ]
-      ],
-      "is_correct": true,
-      "score": 0,
-      "reason": "highest_1ply_evaluation",
-      "completed_depth": 0,
-      "elapsed_ms": 55.1
-    },
-    {
-      "case": "forcing_open_four",
-      "agent": "basic_minimax_baseline",
-      "move": [
-        6,
-        4
-      ],
-      "expected_moves": [
-        [
-          6,
-          4
-        ],
-        [
-          6,
-          8
-        ]
-      ],
-      "is_correct": true,
-      "score": 0,
-      "reason": "shallow_minimax_depth_2",
-      "completed_depth": 0,
-      "elapsed_ms": 955.51
-    },
-    {
-      "case": "forcing_open_four",
-      "agent": "project_easy",
-      "move": [
-        6,
-        4
-      ],
-      "expected_moves": [
-        [
-          6,
-          4
-        ],
-        [
-          6,
-          8
-        ]
-      ],
-      "is_correct": true,
-      "score": 500000,
-      "reason": "creating_open_four",
-      "completed_depth": 0,
-      "elapsed_ms": 50.78
-    },
-    {
-      "case": "forcing_open_four",
-      "agent": "project_medium",
-      "move": [
-        6,
-        4
-      ],
-      "expected_moves": [
-        [
-          6,
-          4
-        ],
-        [
-          6,
-          8
-        ]
-      ],
-      "is_correct": true,
-      "score": 500000,
-      "reason": "creating_open_four",
-      "completed_depth": 0,
-      "elapsed_ms": 48.54
-    },
-    {
-      "case": "forcing_open_four",
-      "agent": "project_hard",
-      "move": [
-        6,
-        4
-      ],
-      "expected_moves": [
-        [
-          6,
-          4
-        ],
-        [
-          6,
-          8
-        ]
-      ],
-      "is_correct": true,
-      "score": 500000,
-      "reason": "creating_open_four",
-      "completed_depth": 0,
-      "elapsed_ms": 51.12
-    },
-    {
-      "case": "create_double_three",
-      "agent": "random_baseline",
-      "move": [
-        2,
-        0
-      ],
-      "expected_moves": [
-        [
-          7,
-          7
-        ]
-      ],
-      "is_correct": false,
-      "score": 0,
-      "reason": "random_legal_move_seeded",
-      "completed_depth": 0,
-      "elapsed_ms": 0.06
-    },
-    {
-      "case": "create_double_three",
-      "agent": "center_first_baseline",
-      "move": [
-        7,
-        7
-      ],
-      "expected_moves": [
-        [
-          7,
-          7
-        ]
-      ],
-      "is_correct": true,
-      "score": 0,
-      "reason": "center_or_nearest_empty",
-      "completed_depth": 0,
-      "elapsed_ms": 0.0
-    },
-    {
-      "case": "create_double_three",
-      "agent": "greedy_1ply_baseline",
-      "move": [
-        5,
-        7
-      ],
-      "expected_moves": [
-        [
-          7,
-          7
-        ]
-      ],
-      "is_correct": false,
-      "score": 0,
-      "reason": "highest_1ply_evaluation",
-      "completed_depth": 0,
-      "elapsed_ms": 62.25
-    },
-    {
-      "case": "create_double_three",
-      "agent": "basic_minimax_baseline",
-      "move": [
-        7,
-        7
-      ],
-      "expected_moves": [
-        [
-          7,
-          7
-        ]
-      ],
-      "is_correct": true,
-      "score": 0,
-      "reason": "shallow_minimax_depth_2",
-      "completed_depth": 0,
-      "elapsed_ms": 1113.98
-    },
-    {
-      "case": "create_double_three",
-      "agent": "project_easy",
-      "move": [
-        7,
-        7
-      ],
-      "expected_moves": [
-        [
-          7,
-          7
-        ]
-      ],
-      "is_correct": true,
-      "score": 376015.0,
-      "reason": "creating_double_threat",
-      "completed_depth": 0,
-      "elapsed_ms": 24.77
-    },
-    {
-      "case": "create_double_three",
-      "agent": "project_medium",
-      "move": [
-        7,
-        7
-      ],
-      "expected_moves": [
-        [
-          7,
-          7
-        ]
-      ],
-      "is_correct": true,
-      "score": 376015.0,
-      "reason": "creating_double_threat",
-      "completed_depth": 0,
-      "elapsed_ms": 24.74
-    },
-    {
-      "case": "create_double_three",
-      "agent": "project_hard",
-      "move": [
-        7,
-        7
-      ],
-      "expected_moves": [
-        [
-          7,
-          7
-        ]
-      ],
-      "is_correct": true,
-      "score": 376015.0,
-      "reason": "creating_double_threat",
-      "completed_depth": 0,
-      "elapsed_ms": 24.42
-    },
-    {
-      "case": "block_double_three",
-      "agent": "random_baseline",
-      "move": [
-        2,
-        0
-      ],
-      "expected_moves": [
-        [
-          7,
-          7
-        ]
-      ],
-      "is_correct": false,
-      "score": 0,
-      "reason": "random_legal_move_seeded",
-      "completed_depth": 0,
-      "elapsed_ms": 0.09
-    },
-    {
-      "case": "block_double_three",
-      "agent": "center_first_baseline",
-      "move": [
-        7,
-        7
-      ],
-      "expected_moves": [
-        [
-          7,
-          7
-        ]
-      ],
-      "is_correct": true,
-      "score": 0,
-      "reason": "center_or_nearest_empty",
-      "completed_depth": 0,
-      "elapsed_ms": 0.0
-    },
-    {
-      "case": "block_double_three",
-      "agent": "greedy_1ply_baseline",
-      "move": [
-        8,
-        9
-      ],
-      "expected_moves": [
-        [
-          7,
-          7
-        ]
-      ],
-      "is_correct": false,
-      "score": 0,
-      "reason": "highest_1ply_evaluation",
-      "completed_depth": 0,
-      "elapsed_ms": 64.35
-    },
-    {
-      "case": "block_double_three",
-      "agent": "basic_minimax_baseline",
-      "move": [
-        7,
-        7
-      ],
-      "expected_moves": [
-        [
-          7,
-          7
-        ]
-      ],
-      "is_correct": true,
-      "score": 0,
-      "reason": "shallow_minimax_depth_2",
-      "completed_depth": 0,
-      "elapsed_ms": 1132.52
-    },
-    {
-      "case": "block_double_three",
-      "agent": "project_easy",
-      "move": [
-        7,
-        7
-      ],
-      "expected_moves": [
-        [
-          7,
-          7
-        ]
-      ],
-      "is_correct": true,
-      "score": 188015.0,
-      "reason": "blocking_double_threat",
-      "completed_depth": 0,
-      "elapsed_ms": 24.37
-    },
-    {
-      "case": "block_double_three",
-      "agent": "project_medium",
-      "move": [
-        7,
-        7
-      ],
-      "expected_moves": [
-        [
-          7,
-          7
-        ]
-      ],
-      "is_correct": true,
-      "score": 188015.0,
-      "reason": "blocking_double_threat",
-      "completed_depth": 0,
-      "elapsed_ms": 24.43
-    },
-    {
-      "case": "block_double_three",
-      "agent": "project_hard",
-      "move": [
-        7,
-        7
-      ],
-      "expected_moves": [
-        [
-          7,
-          7
-        ]
-      ],
-      "is_correct": true,
-      "score": 188015.0,
-      "reason": "blocking_double_threat",
-      "completed_depth": 0,
-      "elapsed_ms": 25.03
-    },
-    {
-      "case": "diagonal_win",
-      "agent": "random_baseline",
-      "move": [
-        2,
-        0
-      ],
-      "expected_moves": [
-        [
-          3,
-          3
-        ],
-        [
-          8,
-          8
-        ]
-      ],
-      "is_correct": false,
-      "score": 0,
-      "reason": "random_legal_move_seeded",
-      "completed_depth": 0,
-      "elapsed_ms": 0.08
-    },
-    {
-      "case": "diagonal_win",
-      "agent": "center_first_baseline",
-      "move": [
-        6,
-        7
-      ],
-      "expected_moves": [
-        [
-          3,
-          3
-        ],
-        [
-          8,
-          8
-        ]
-      ],
-      "is_correct": false,
-      "score": 0,
-      "reason": "center_or_nearest_empty",
-      "completed_depth": 0,
-      "elapsed_ms": 0.01
-    },
-    {
-      "case": "diagonal_win",
-      "agent": "greedy_1ply_baseline",
-      "move": [
-        8,
-        8
-      ],
-      "expected_moves": [
-        [
-          3,
-          3
-        ],
-        [
-          8,
-          8
-        ]
-      ],
-      "is_correct": true,
-      "score": 0,
-      "reason": "highest_1ply_evaluation",
-      "completed_depth": 0,
-      "elapsed_ms": 60.34
-    },
-    {
-      "case": "diagonal_win",
-      "agent": "basic_minimax_baseline",
-      "move": [
-        8,
-        8
-      ],
-      "expected_moves": [
-        [
-          3,
-          3
-        ],
-        [
-          8,
-          8
-        ]
-      ],
-      "is_correct": true,
-      "score": 0,
-      "reason": "shallow_minimax_depth_2",
-      "completed_depth": 0,
-      "elapsed_ms": 898.81
-    },
-    {
-      "case": "diagonal_win",
-      "agent": "project_easy",
-      "move": [
-        8,
-        8
-      ],
-      "expected_moves": [
-        [
-          3,
-          3
-        ],
-        [
-          8,
-          8
-        ]
-      ],
-      "is_correct": true,
-      "score": Infinity,
-      "reason": "winning_move",
-      "completed_depth": 0,
-      "elapsed_ms": 18.21
-    },
-    {
       "case": "diagonal_win",
       "agent": "project_medium",
       "move": [
@@ -1249,7 +1249,7 @@
       "score": Infinity,
       "reason": "winning_move",
       "completed_depth": 0,
-      "elapsed_ms": 18.37
+      "elapsed_ms": 20.5
     },
     {
       "case": "diagonal_win",
@@ -1272,7 +1272,7 @@
       "score": Infinity,
       "reason": "winning_move",
       "completed_depth": 0,
-      "elapsed_ms": 17.5
+      "elapsed_ms": 19.75
     }
   ],
   "accuracy_by_agent": {
@@ -1287,9 +1287,9 @@
       "accuracy": 0.5
     },
     "greedy_1ply_baseline": {
-      "correct": 6,
+      "correct": 7,
       "total": 8,
-      "accuracy": 0.75
+      "accuracy": 0.875
     },
     "basic_minimax_baseline": {
       "correct": 8,

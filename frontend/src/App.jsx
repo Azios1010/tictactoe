@@ -115,13 +115,20 @@ function App() {
   const [aiCompletedDepth, setAiCompletedDepth] = useState(0)
   const [aiElapsedMs, setAiElapsedMs] = useState(null)
   const [aiLastMove, setAiLastMove] = useState(null)
+  const [aiMoveHistory, setAiMoveHistory] = useState([])
   const [backendStatus, setBackendStatus] = useState('idle')
   const [difficulty, setDifficulty] = useState('medium')
   const [arenaBatchSize, setArenaBatchSize] = useState(10)
   const [arenaSummary, setArenaSummary] = useState(null)
   const [arenaPlayback, setArenaPlayback] = useState([])
   const [isArenaRunning, setIsArenaRunning] = useState(false)
+  const [showConsultant, setShowConsultant] = useState(false)
+  const [consultantMoves, setConsultantMoves] = useState([])
+  const [consultantValue, setConsultantValue] = useState(0)
+  const [isModelAvailable, setIsModelAvailable] = useState(true)
+  const [isConsulting, setIsConsulting] = useState(false)
   const playbackTimersRef = useRef([])
+
 
   useEffect(() => {
     if (mode !== 'play') {
@@ -169,8 +176,63 @@ function App() {
     setAiCompletedDepth(0)
     setAiElapsedMs(null)
     setAiLastMove(null)
+    setAiMoveHistory([])
     setBackendStatus('idle')
+    setConsultantMoves([])
+    setConsultantValue(0)
   }
+
+  async function fetchConsultantAdvice(currentBoard) {
+    if (gameOver || isThinking || mode !== 'play') {
+      return
+    }
+
+    setIsConsulting(true)
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/get-consultation`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          board: currentBoard,
+          player: -1, // Recommend moves for human player (X)
+          top_k: 3
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error('Consultation request failed')
+      }
+
+      const data = await response.json()
+      setIsModelAvailable(data.model_available)
+      if (data.model_available) {
+        setConsultantMoves(data.moves ?? [])
+        setConsultantValue(data.value ?? 0.0)
+      } else {
+        setConsultantMoves([])
+        setConsultantValue(0)
+      }
+    } catch (error) {
+      console.warn('Consultant advisor fetch failed:', error)
+      setConsultantMoves([])
+      setConsultantValue(0)
+    } finally {
+      setIsConsulting(false)
+    }
+  }
+
+  useEffect(() => {
+    if (mode !== 'play' || !showConsultant || gameOver || isThinking) {
+      setConsultantMoves([])
+      setConsultantValue(0)
+      return
+    }
+
+    void fetchConsultantAdvice(board)
+  }, [board, showConsultant, gameOver, isThinking, mode])
+
 
   function resetArenaBoard(message = 'Arena ready. Run self-play to collect new samples.') {
     clearArenaPlaybackTimers()
@@ -183,6 +245,7 @@ function App() {
     setAiCompletedDepth(0)
     setAiElapsedMs(null)
     setAiLastMove(null)
+    setAiMoveHistory([])
     setBackendStatus('idle')
     setArenaPlayback([])
   }
@@ -233,6 +296,14 @@ function App() {
         return
       }
 
+      setAiMoveHistory((currentHistory) => [
+        ...currentHistory,
+        {
+          board: cloneBoard(nextBoard),
+          row: data.row,
+          col: data.col
+        }
+      ])
       setBoard((currentBoard) => {
         const updatedBoard = cloneBoard(currentBoard)
         updatedBoard[data.row][data.col] = 1
@@ -253,6 +324,28 @@ function App() {
     }
   }
 
+  async function reportGameResult(winner, history = aiMoveHistory) {
+    if (history.length === 0) {
+      return
+    }
+
+    try {
+      await fetch(`${API_BASE_URL}/api/report-game-result`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          difficulty,
+          winner,
+          ai_moves: history
+        })
+      })
+    } catch {
+      // Gameplay should not be interrupted if post-game learning cannot be reported.
+    }
+  }
+
   function handleSquareClick(row, col) {
     if (mode !== 'play' || board[row][col] !== 0 || isThinking || gameOver) {
       return
@@ -263,7 +356,14 @@ function App() {
     setBoard(nextBoard)
     setLastMove({ row, col })
 
-    if (hasWinner(nextBoard, -1) || isBoardFull(nextBoard)) {
+    if (hasWinner(nextBoard, -1)) {
+      setStatus('Player wins. The AI will remember this lost line.')
+      setGameOver(true)
+      void reportGameResult(-1)
+      return
+    }
+
+    if (isBoardFull(nextBoard)) {
       return
     }
 
@@ -402,6 +502,12 @@ function App() {
             <span className="info-label">{detailLabel}</span>
             <strong>{detailMetric}</strong>
           </div>
+          {mode === 'play' && showConsultant && isModelAvailable && (
+            <div className="info-card">
+              <span className="info-label">Advisor Value</span>
+              <strong>{((consultantValue + 1) / 2 * 100).toFixed(1)}% Win Chance</strong>
+            </div>
+          )}
         </div>
 
         {mode === 'arena' ? (
@@ -470,6 +576,27 @@ function App() {
             </div>
             <span className="hint-text">X is the player, O is the backend AI, board size is 15x15.</span>
 
+            <div className="consultant-toggle-card">
+              <label className="consultant-toggle-label" htmlFor="consultant-toggle">
+                <strong>Consultant Advisor</strong>
+                <span>
+                  {!isModelAvailable
+                    ? 'Advisor model not loaded'
+                    : isConsulting
+                    ? 'Updating advice...'
+                    : 'Show top recommended moves'}
+                </span>
+              </label>
+              <input
+                id="consultant-toggle"
+                className="switch-checkbox"
+                type="checkbox"
+                checked={showConsultant}
+                onChange={(event) => setShowConsultant(event.target.checked)}
+                disabled={!isModelAvailable}
+              />
+            </div>
+
             <div className="analysis-panel" aria-label="AI analysis">
               <div className="analysis-header">
                 <div>
@@ -511,7 +638,7 @@ function App() {
       </section>
 
       <section className="board-panel">
-        <Board board={board} onSquareClick={handleSquareClick} disabled={disabledBoard} lastMove={lastMove} />
+        <Board board={board} onSquareClick={handleSquareClick} disabled={disabledBoard} lastMove={lastMove} consultantMoves={consultantMoves} />
       </section>
     </main>
   )

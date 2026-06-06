@@ -3,10 +3,10 @@ venv/
 frontend/node_modules/
 frontend/dist/
 __pycache__/
+data/
 *.pyc
 *.pyo
 *.pyd
 .DS_Store
 .env
-
 

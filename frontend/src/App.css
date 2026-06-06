@@ -379,3 +379,111 @@ button {
     font-size: 0.82rem;
   }
 }
+
+/* Consultant Advisor UI overlays */
+.advisor-indicator {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #ffffff;
+  animation: advisor-pulse 1.8s infinite ease-in-out;
+  cursor: help;
+}
+
+.advisor-rank-1 {
+  background: linear-gradient(135deg, #ea580c, #b45309);
+  box-shadow: 0 0 8px rgba(234, 88, 12, 0.6);
+}
+
+.advisor-rank-2 {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  box-shadow: 0 0 6px rgba(245, 158, 11, 0.5);
+}
+
+.advisor-rank-3 {
+  background: linear-gradient(135deg, #0f766e, #0d9488);
+  box-shadow: 0 0 5px rgba(15, 118, 110, 0.55);
+}
+
+@keyframes advisor-pulse {
+  0% {
+    transform: scale(0.92);
+    opacity: 0.9;
+  }
+  50% {
+    transform: scale(1.08);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0.92);
+    opacity: 0.9;
+  }
+}
+
+.consultant-toggle-card {
+  margin-top: 1rem;
+  padding: 0.9rem 1rem;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(15, 118, 110, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.consultant-toggle-label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  cursor: pointer;
+}
+
+.consultant-toggle-label strong {
+  font-size: 0.92rem;
+  color: #0f172a;
+}
+
+.consultant-toggle-label span {
+  font-size: 0.78rem;
+  color: #64748b;
+}
+
+.switch-checkbox {
+  cursor: pointer;
+  width: 44px;
+  height: 22px;
+  appearance: none;
+  background: #cbd5e1;
+  border-radius: 99px;
+  position: relative;
+  outline: none;
+  transition: background 250ms ease;
+}
+
+.switch-checkbox:checked {
+  background: #0f766e;
+}
+
+.switch-checkbox::before {
+  content: '';
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #ffffff;
+  top: 2px;
+  left: 2px;
+  transition: transform 250ms ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+.switch-checkbox:checked::before {
+  transform: translateX(22px);
+}
+

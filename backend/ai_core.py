@@ -6,7 +6,7 @@ import random
 from math import inf
 from pathlib import Path
 from time import perf_counter
-from typing import Iterable
+from typing import Any, Iterable
 
 from ai_types import (
     AI_STONE,
@@ -27,10 +27,11 @@ from threats import ThreatDetector
 class GomokuAI:
     """Search orchestrator for a 15x15 Gomoku board."""
 
-    MEMORY_VERSION = 3
+    MEMORY_VERSION = 4
     EXACT = "EXACT"
     LOWERBOUND = "LOWERBOUND"
     UPPERBOUND = "UPPERBOUND"
+    LOSS_MEMORY_PENALTY = 2_500_000
     _zobrist_table: list[list[list[int]]] | None = None
     _zobrist_side_to_move: dict[int, int] | None = None
 
@@ -56,6 +57,7 @@ class GomokuAI:
             self.__class__._zobrist_table = zobrist_table
             self.__class__._zobrist_side_to_move = side_to_move
         self.transposition_table: dict[int, tuple[int, float, str, tuple[int, int] | None]] = {}
+        self.loss_memory: dict[int, dict[tuple[int, int], int]] = {}
         self.load_memory(self.memory_filename)
         atexit.register(self.save_memory, self.memory_filename)
 
@@ -106,7 +108,8 @@ class GomokuAI:
         if not isinstance(payload, dict):
             return
 
-        if payload.get("version") == self.MEMORY_VERSION and isinstance(payload.get("entries"), dict):
+        version = payload.get("version")
+        if version in {3, self.MEMORY_VERSION} and isinstance(payload.get("entries"), dict):
             entries = payload["entries"]
             normalized_entries: dict[int, tuple[int, float, str, tuple[int, int] | None]] = {}
             for board_hash, entry in entries.items():
@@ -119,6 +122,9 @@ class GomokuAI:
                 normalized_entries[int(board_hash)] = (int(depth), float(score), str(flag), best_move)
             self.transposition_table = normalized_entries
 
+        if version == self.MEMORY_VERSION and isinstance(payload.get("loss_memory"), dict):
+            self.loss_memory = self._normalize_loss_memory(payload["loss_memory"])
+
     def save_memory(self, filename: str | Path | None = None) -> None:
         path = Path(filename or self.memory_filename)
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -127,10 +133,62 @@ class GomokuAI:
                 payload = {
                     "version": self.MEMORY_VERSION,
                     "entries": self.transposition_table,
+                    "loss_memory": self.loss_memory,
                 }
                 pickle.dump(payload, handle, protocol=pickle.HIGHEST_PROTOCOL)
         except OSError:
             return
+
+    def _normalize_loss_memory(self, payload: dict) -> dict[int, dict[tuple[int, int], int]]:
+        normalized: dict[int, dict[tuple[int, int], int]] = {}
+        for board_hash, moves in payload.items():
+            if not isinstance(moves, dict):
+                continue
+            normalized_moves: dict[tuple[int, int], int] = {}
+            for move, count in moves.items():
+                if not isinstance(move, (tuple, list)) or len(move) != 2:
+                    continue
+                normalized_moves[(int(move[0]), int(move[1]))] = max(1, int(count))
+            if normalized_moves:
+                normalized[int(board_hash)] = normalized_moves
+        return normalized
+
+    def record_losing_move(
+        self,
+        board: list[list[int]],
+        move: tuple[int, int] | None,
+        player: int = AI_STONE,
+    ) -> None:
+        if move is None:
+            return
+        if player not in {AI_STONE, HUMAN_STONE}:
+            raise ValueError("Player must be either 1 or -1.")
+
+        memory_board = normalize_board(board, player) if player == HUMAN_STONE else board
+        board_key = self.compute_search_hash(memory_board, AI_STONE)
+        moves = self.loss_memory.setdefault(board_key, {})
+        moves[move] = moves.get(move, 0) + 1
+
+    def record_game_outcome(self, ai_moves: Iterable[dict[str, Any]], winner: int) -> int:
+        if winner != HUMAN_STONE:
+            return 0
+
+        recorded = 0
+        for move_record in ai_moves:
+            board = move_record.get("board")
+            move = self._coerce_recorded_move(move_record.get("move", move_record))
+            if not isinstance(board, list) or move is None:
+                continue
+            self.record_losing_move(board, move, AI_STONE)
+            recorded += 1
+        return recorded
+
+    def _coerce_recorded_move(self, move: Any) -> tuple[int, int] | None:
+        if isinstance(move, dict) and "row" in move and "col" in move:
+            return (int(move["row"]), int(move["col"]))
+        if isinstance(move, (tuple, list)) and len(move) == 2:
+            return (int(move[0]), int(move[1]))
+        return None
 
     def get_best_move(self, board: list[list[int]], player: int = AI_STONE) -> tuple[int, int] | None:
         return self.get_move_analysis(board, player).move
@@ -153,6 +211,7 @@ class GomokuAI:
             return MoveAnalysis(move=None, score=float(self.evaluate_board(board)), reason="game_finished", completed_depth=0)
 
         candidates = self._generate_candidates(board)
+        candidates = self._order_candidates_by_loss_memory(board, candidates)
         if not candidates or not self._has_any_stone(board):
             center = self.board_size // 2
             return MoveAnalysis(move=(center, center), score=0, reason="opening_center", completed_depth=0)
@@ -193,14 +252,14 @@ class GomokuAI:
                 completed_depth=0,
             )
 
-        deadline = self._search_deadline()
+        forcing_deadline = self._search_deadline()
         try:
             forcing_move = self._find_forcing_win(
                 board=board,
                 attacker=AI_STONE,
                 defender=HUMAN_STONE,
                 depth=2,
-                deadline=deadline,
+                deadline=forcing_deadline,
             )
         except SearchTimeout:
             forcing_move = None
@@ -212,9 +271,11 @@ class GomokuAI:
                 completed_depth=0,
             )
 
-        best_move: tuple[int, int] | None = candidates[0]
-        best_score = float(self._score_move(board, best_move[0], best_move[1]))
-        ordered_candidates = candidates
+        search_candidates = self._generate_candidates(board, use_policy_prior=True) or candidates
+        deadline = self._search_deadline()
+        best_move: tuple[int, int] | None = search_candidates[0]
+        best_score = float(self._score_move(board, best_move[0], best_move[1]) - self._loss_memory_penalty(board, best_move))
+        ordered_candidates = search_candidates
         completed_depth = 0
         timed_out = False
 
@@ -228,7 +289,7 @@ class GomokuAI:
                 best_move = move
                 best_score = score
                 completed_depth = depth
-                ordered_candidates = self._prioritize_move(candidates, best_move)
+                ordered_candidates = self._prioritize_move(search_candidates, best_move)
 
         reason = "timeout_best_known" if timed_out and completed_depth == 0 else self._classify_move_reason(board, best_move)
         return MoveAnalysis(move=best_move, score=best_score, reason=reason, completed_depth=completed_depth)
@@ -262,6 +323,7 @@ class GomokuAI:
             finally:
                 board[row][col] = EMPTY
 
+            score -= self._loss_memory_penalty(board, (row, col))
             if score > best_score:
                 best_score = score
                 best_move = (row, col)
@@ -530,8 +592,23 @@ class GomokuAI:
                 board[row][col] = EMPTY
         return None
 
-    def _generate_candidates(self, board: list[list[int]]) -> list[tuple[int, int]]:
-        return self.move_ordering.generate_candidates(board)
+    def _generate_candidates(self, board: list[list[int]], use_policy_prior: bool = False) -> list[tuple[int, int]]:
+        return self.move_ordering.generate_candidates(board, use_policy_prior=use_policy_prior)
+
+    def _order_candidates_by_loss_memory(
+        self,
+        board: list[list[int]],
+        candidates: list[tuple[int, int]],
+    ) -> list[tuple[int, int]]:
+        board_key = self.compute_search_hash(board, AI_STONE)
+        remembered_losses = self.loss_memory.get(board_key)
+        if not remembered_losses:
+            return candidates
+        return sorted(candidates, key=lambda move: remembered_losses.get(move, 0))
+
+    def _loss_memory_penalty(self, board: list[list[int]], move: tuple[int, int]) -> int:
+        board_key = self.compute_search_hash(board, AI_STONE)
+        return self.loss_memory.get(board_key, {}).get(move, 0) * self.LOSS_MEMORY_PENALTY
 
     def _score_move(self, board: list[list[int]], row: int, col: int) -> int:
         return self.move_ordering.score_move(board, row, col)

@@ -1,356 +1,729 @@
-# 20 Cau Hoi Giang Vien Kho Tinh Co The Hoi Va Dap An Chi Tiet
+# Presentation Q&A Detailed - Gomoku/Caro 15x15 AI
 
-Tai lieu nay dung de tap Q&A sau khi thuyet trinh. Moi cau co:
+Tai lieu nay dung de tap tra loi phan hoi sau khi thuyet trinh slide moi. Moi cau co:
 
-- **Tra loi ngan:** cau tra loi 15-30 giay.
-- **Giai thich chi tiet:** noi them neu giang vien hoi sau.
-- **Can tranh:** nhung cau noi de bi bat be.
+- **Tra loi ngan:** dung khi can tra loi trong 15-30 giay.
+- **Giai thich chi tiet:** noi them khi giang vien hoi sau.
+- **Can tranh:** nhung cach noi de bi bat be.
 
-Nguyen tac chung:
+Nguyen tac an toan khi tra loi:
 
-- Khong claim AI la SOTA.
+- Khong claim AI la state-of-the-art.
 - Khong claim manh hon Rapfi/Yixin.
-- Khong noi model thay the classical engine.
-- Khong noi A/B benchmark nho la bang chung playing strength tang ro ret.
-- Neu gap cau hoi kho, thua nhan gioi han va noi huong cai tien.
+- Khong noi CNN thay the minimax/alpha-beta.
+- Khong noi loss memory la reinforcement learning.
+- Khong noi benchmark nho chung minh playing strength tong quat.
+- Neu bi hoi kho, thua nhan gioi han va dua ra huong cai tien.
 
-## 1. Vi sao repo ten `Tictactoe` nhung de tai lai la Gomoku/Caro 15x15?
+---
+
+## 1. Vi sao repo ten `Tictactoe` nhung de tai la Gomoku/Caro 15x15?
 
 **Tra loi ngan:**
 
-> `Tictactoe` la ten lich su cua repository. Bai toan hien tai da duoc phat trien thanh Gomoku/Caro 15x15, khong phai tic-tac-toe 3x3. Trong report va code, board size, rule win 5 quan va AI core deu theo Gomoku 15x15.
+> `Tictactoe` la ten lich su cua repository. Phan game hien tai da duoc phat trien thanh Gomoku/Caro 15x15, voi board 15x15 va dieu kien thang la 5 quan lien tiep.
 
 **Giai thich chi tiet:**
 
-Ban dau repo co the duoc tao voi ten tong quat/cu, nhung kien truc hien tai da thay doi. Evidence nam o:
-
-- Board 15x15.
-- Luat thang la 5 quan lien tiep.
-- Backend co `BOARD_SIZE = 15`, `WIN_LENGTH = 5`.
-- Frontend render board 15x15.
-- Report va slide deu ghi ro project khong phai tic-tac-toe 3x3.
+Trong code, `BOARD_SIZE = 15`, `WIN_LENGTH = 5`. Frontend render ban co 15x15, backend validate board 15 hang 15 cot, AI core tim 5 quan lien tiep theo 4 huong. Vi vay noi dung ky thuat hien tai la Gomoku/Caro, khong phai tic-tac-toe 3x3.
 
 **Can tranh:**
 
 > "Ten repo khong quan trong."
 
-Nen noi ro day la ten lich su, con noi dung ky thuat hien tai la Gomoku.
+Nen noi day la ten lich su, con noi dung hien tai da ro rang la Gomoku.
 
-## 2. Vi sao Gomoku 15x15 kho hon tic-tac-toe 3x3?
+---
+
+## 2. Bai toan chinh cua du an la gi?
 
 **Tra loi ngan:**
 
-> Tic-tac-toe 3x3 chi co 9 o, con Gomoku 15x15 co 225 o. Neu dung minimax xet tat ca o trong, branching factor tang rat nhanh theo do sau search. Vi vay Gomoku can candidate pruning, move ordering, heuristic evaluator va time limit.
+> Bai toan la xay dung mot AI choi Gomoku/Caro 15x15 trong moi truong tuong tac, vua phai chon nuoc hop ly, vua phai phan hoi nhanh. Du an ket hop classical game search voi threat detection va CNN consultant model o vai tro ho tro.
 
 **Giai thich chi tiet:**
 
-Trong game doi khang, minimax mo rong cay tim kiem theo so nuoc hop le. O dau game Gomoku co toi da 225 nuoc hop le. Neu search do sau 3 ma khong giam nhanh, so nhanh co the rat lon. Do do du an chi xet candidate quanh cac quan da co va uu tien tactical moves.
+Project co 3 phan chinh:
+
+1. Frontend React/Vite de nguoi choi dau voi AI va xem arena.
+2. Backend FastAPI de validate request va goi AI.
+3. AI core gom minimax, alpha-beta, iterative deepening, candidate generation, evaluator, threat detection, Zobrist hash, transposition table, loss memory va policy prior.
 
 **Can tranh:**
 
-> "May tinh hien nay manh nen van search duoc."
+> "Day la web game la chinh."
 
-Sai framing. Nen nhan manh 15x15 can toi uu de chay tuong tac.
+Nen nhan manh trong mon AI, dong gop chinh la core AI va benchmark.
 
-## 3. Minimax trong du an hoat dong nhu the nao?
+---
+
+## 3. Vi sao Gomoku 15x15 kho hon tic-tac-toe 3x3?
 
 **Tra loi ngan:**
 
-> Minimax gia lap hai ben di toi uu: AI chon nuoc lam diem cao nhat, nguoi choi chon nuoc lam diem cua AI thap nhat. Diem board duoc tinh bang heuristic evaluator ket hop attack, defense va threat patterns.
+> Tic-tac-toe chi co 9 o, con Gomoku 15x15 co 225 o. Neu search tat ca nuoc hop le, branching factor tang rat nhanh theo depth, nen can candidate pruning, move ordering, alpha-beta va heuristic evaluator.
 
 **Giai thich chi tiet:**
 
-Tai node cua AI, engine thu cac candidate moves va lay score lon nhat. Tai node cua doi thu, engine gia dinh doi thu cung choi hop ly va chon score nho nhat cho AI. Vi khong the search den het van, evaluator uoc luong gia tri board tai leaf node.
+O dau game, so nuoc hop le gan 225. Neu search depth 3 theo cach don gian, so nhanh co the len toi hang trieu. Vi vay AI khong duyet toan bo board ma chi sinh candidate quanh vung da co quan, dong thoi uu tien cac nuoc chien thuat.
+
+**Can tranh:**
+
+> "May tinh manh nen search het duoc."
+
+Khong dung voi board 15x15 va yeu cau realtime.
+
+---
+
+## 4. Kien truc tong quan cua he thong la gi?
+
+**Tra loi ngan:**
+
+> He thong gom frontend, backend, AI core va CNN consultant model. Frontend gui board len FastAPI backend, backend goi `GomokuAI`, AI tra ve nuoc di, diem danh gia, reason va completed depth.
+
+**Giai thich chi tiet:**
+
+Luong chinh:
+
+```text
+Nguoi choi click
+-> Frontend cap nhat board local
+-> POST /api/get-move
+-> Backend validate board/difficulty
+-> GomokuAI.get_move_analysis()
+-> Tra row, col, evaluation, reason, completed_depth
+-> Frontend dat quan AI
+```
+
+Ngoai ra con co arena service cho self-play va consultant API cho model goi y top-K moves.
+
+**Can tranh:**
+
+> "Frontend tu tinh AI."
+
+AI chinh nam o backend.
+
+---
+
+## 5. Cac file trong backend co vai tro gi?
+
+**Tra loi ngan:**
+
+> `main.py` la API FastAPI, `ai_core.py` la bo dieu phoi search, `ai_types.py` chua constants/config, `board_rules.py` chua luat ban co, `threats.py` nhan dien threat, `evaluator.py` cham diem board, `move_ordering.py` sinh va sap xep candidate.
+
+**Giai thich chi tiet:**
+
+Mapping nhanh:
+
+| File | Vai tro |
+|---|---|
+| `main.py` | API, validation, difficulty config |
+| `ai_core.py` | Minimax, alpha-beta, iterative deepening, TT, hash, loss memory |
+| `ai_types.py` | `BOARD_SIZE`, `SearchConfig`, `MoveAnalysis`, `ThreatSummary` |
+| `board_rules.py` | Winner check, bounds, empty cells, normalize |
+| `threats.py` | Open-four, closed-four, open-three, broken-three |
+| `evaluator.py` | Tinh `AI score - Human score` |
+| `move_ordering.py` | Candidate generation, scoring, reason classification, policy prior |
+
+**Can tranh:**
+
+> "Tat ca AI nam trong mot file."
+
+Hien tai AI da tach module ro rang.
+
+---
+
+## 6. Minimax trong du an hoat dong nhu the nao?
+
+**Tra loi ngan:**
+
+> Minimax gia dinh hai ben deu choi hop ly: AI chon nuoc lam diem cao nhat, nguoi choi chon nuoc lam diem AI thap nhat. Khi search den depth limit, AI dung evaluator de uoc luong board.
+
+**Giai thich chi tiet:**
+
+Tai node maximizing, AI thu cac candidate va lay score lon nhat. Tai node minimizing, engine gia dinh doi thu se chon nuoc lam score cua AI nho nhat. Vi khong the search den het van, leaf node duoc cham bang heuristic evaluator.
 
 **Can tranh:**
 
 > "Minimax dam bao tim nuoc toi uu."
 
-Chi dung neu search full game tree. O day search bi gioi han depth, candidate va time limit, nen chi la toi uu trong pham vi search.
+Chi dung neu search toan bo game tree. O day co gioi han depth, candidate va time.
 
-## 4. Alpha-beta pruning co lam thay doi ket qua minimax khong?
+---
+
+## 7. Alpha-beta pruning co lam thay doi ket qua minimax khong?
 
 **Tra loi ngan:**
 
-> Khong, alpha-beta pruning khong lam thay doi ket qua minimax tren cung tap candidate va cung do sau search. No chi cat nhung nhanh da chac chan khong anh huong den quyet dinh cuoi cung.
+> Khong. Voi cung tap candidate va cung depth, alpha-beta chi cat cac nhanh khong anh huong den ket qua minimax, giup search nhanh hon.
 
 **Giai thich chi tiet:**
 
-Alpha la diem tot nhat hien co cua maximizing player, beta la diem tot nhat hien co cua minimizing player. Khi alpha >= beta, nhanh hien tai khong the tao ket qua tot hon nua nen co the bo qua. Move ordering tot giup alpha-beta cat nhanh som hon.
+`alpha` la diem tot nhat da biet cua AI, `beta` la diem tot nhat da biet cua doi thu. Khi `alpha >= beta`, nhanh hien tai khong the lam thay doi quyet dinh cuoi cung nen bo qua. Move ordering tot giup alpha-beta cat nhanh som hon.
 
 **Can tranh:**
 
-> "Alpha-beta la heuristic nen co the sai."
+> "Alpha-beta la heuristic co the sai."
 
-Alpha-beta khong phai heuristic danh gia; no la toi uu hoa cua minimax.
+Alpha-beta la toi uu hoa cua minimax, khong phai ham danh gia.
 
-## 5. Candidate pruning co the bo sot nuoc thang hoac nuoc chan quan trong khong?
+---
+
+## 8. Iterative deepening la gi?
 
 **Tra loi ngan:**
 
-> Co rui ro neu pruning qua manh, nen engine xu ly immediate win/block truoc va sinh candidate quanh vung da co quan. Trong Gomoku, phan lon nuoc co y nghia chien thuat nam gan cac quan da danh. Tuy vay, day van la gioi han cua engine.
+> Iterative deepening search lan luot depth 1, depth 2, depth 3... Neu het thoi gian o depth cao, AI van co nuoc tot nhat tu depth da hoan thanh truoc do.
 
 **Giai thich chi tiet:**
 
-Du an giam rui ro bang cac buoc:
-
-- Kiem tra nuoc thang ngay.
-- Kiem tra nuoc chan doi thu thang ngay.
-- Threat-aware move ordering.
-- Regression tactical tests.
-
-Nhung khong nen noi candidate pruning khong bao gio bo sot. Trong cac the dac biet, mot nuoc xa co the co y nghia chien luoc, va engine hien tai co the chua xet.
+Co che nay phu hop voi UI realtime. Backend co time limit theo difficulty. AI khong bi treo vo han, va response tra ve `completed_depth` de biet search da hoan thanh den muc nao.
 
 **Can tranh:**
 
-> "Khong bao gio bo sot."
+> "AI luon search dung depth config."
 
-Nen noi "giam rui ro" thay vi "dam bao tuyet doi".
+Khong chac. Neu het time limit, completed depth co the thap hon depth config.
 
-## 6. Vi sao `completed_depth = 0` van hop ly?
+---
+
+## 9. `completed_depth = 0` co phai loi khong?
 
 **Tra loi ngan:**
 
-> Vi engine co cac rule xu ly nhanh truoc search sau. Neu board trong thi tra `opening_center`; neu co nuoc thang ngay thi tra `winning_move`; neu phai chan thang thi tra `blocking_win`. Cac case nay khong can iterative deepening, nen depth 0 la hop ly.
+> Khong. `completed_depth = 0` co the la fast-path tactical. Vi du board trong thi danh center, co nuoc thang ngay thi danh `winning_move`, can chan thang thi `blocking_win`, cac case nay khong can minimax.
 
 **Giai thich chi tiet:**
 
-`completed_depth` cho biet do sau iterative search da hoan thanh. Neu engine quyet dinh truoc search bang tactical rule, no khong vao minimax depth 1/2/3, nen `completed_depth = 0`.
+`completed_depth` chi do depth cua iterative deepening. Neu AI quyet dinh truoc search bang tactical rule, depth se la 0 nhung do la hanh vi dung.
 
 **Can tranh:**
 
-> "Depth 0 la loi UI."
+> "Depth 0 nghia la AI khong suy nghi."
 
-Khong. Phai giai thich no la fast-path tactical.
+No co the da dung rule chien thuat nhanh.
 
-## 7. Threat detection cua nhom co phai full Threat Space Search khong?
+---
+
+## 10. Candidate generation la gi va vi sao can?
 
 **Tra loi ngan:**
 
-> Khong. Threat detection cua nhom la pattern-based detector cho cac mau nhu open-four, closed-four, open-three, broken-three va double-threat. No ho tro evaluator va move ordering, nhung chua phai full Threat Space Search hay VCF solver.
+> Candidate generation la buoc loc ra cac o dang xem xet thay vi duyet ca 225 o. AI chi xet cac o trong gan cac quan da co va uu tien nuoc chien thuat, giup giam branching factor.
 
 **Giai thich chi tiet:**
 
-Full Threat Space Search thuong tim chuoi forcing moves dai va co logic chuyen sau hon. Du an hien tai moi nhan dien threat patterns va co limited threat extension. Day la thanh phan tri thuc mien, khong phai solver day du.
+Trong Gomoku, phan lon nuoc co y nghia nam gan cac cum quan. `move_ordering.py` lay cac o trong trong radius quanh quan da danh, cham diem tung candidate, sap xep va cat theo `candidate_limit`.
 
 **Can tranh:**
 
-> "Co threat detection nen coi nhu TSS."
+> "Candidate pruning khong bao gio bo sot."
 
-Giang vien de bat loi cau nay.
+Nen noi no la trade-off giua chat luong va toc do.
 
-## 8. Open-four, closed-four, open-three, broken-three khac nhau the nao?
+---
+
+## 11. Candidate pruning co the bo sot nuoc tot khong?
 
 **Tra loi ngan:**
 
-> Open-four la bon quan lien tiep co hai dau mo, rat nguy hiem vi co hai diem thang. Closed-four la bon quan nhung bi chan mot dau, van nguy hiem nhung de phong thu hon. Open-three la ba quan co kha nang phat trien thanh open-four. Broken-three la threat co khoang trong o giua, vi du dang bi dut mot o nhung van co tiem nang tao threat.
+> Ve ly thuyet co. Do do engine co cac lop bao ve nhu immediate win/block, forcing candidates va threat-aware ordering. Tuy nhien, cac chien luoc xa va dai han van la gioi han cua engine hien tai.
 
 **Giai thich chi tiet:**
 
-Do uu tien thuong la:
+AI dam bao hon cho tactic gan:
+
+- Thang ngay.
+- Chan doi thu thang ngay.
+- Tao/chan double threat.
+- Open-four, closed-four.
+- Candidate forcing khong bi cat bo chi vi `candidate_limit`.
+
+Nhung khong nen claim engine tim moi chien luoc toan cuc.
+
+**Can tranh:**
+
+> "Loc candidate nhung van dam bao toi uu tuyet doi."
+
+Khong dung.
+
+---
+
+## 12. Threat detection hoat dong nhu the nao?
+
+**Tra loi ngan:**
+
+> AI chuyen moi hang/cot/duong cheo thanh chuoi `0/1/2`: `1` la quan cua player dang xet, `0` la o trong, `2` la quan doi thu hoac bien. Sau do dem pattern nhu five, open-four, closed-four, open-three, broken-three.
+
+**Giai thich chi tiet:**
+
+Vi du `011110` la open-four: bon quan lien tiep va hai dau mo. Threat summary duoc dung trong evaluator, move ordering va reason classification.
+
+**Can tranh:**
+
+> "Threat detection la full Threat Space Search."
+
+No chi la pattern-based detector, khong phai solver day du.
+
+---
+
+## 13. Open-four, closed-four, open-three, broken-three khac nhau the nao?
+
+**Tra loi ngan:**
+
+> Open-four la bon quan co hai dau mo, rat nguy hiem vi co hai diem thang. Closed-four la bon quan chi con mot dau mo hoac dang bi gioi han. Open-three la ba quan co the phat trien thanh open-four. Broken-three la ba quan co khoang trong o giua nhung van tao ap luc.
+
+**Giai thich chi tiet:**
+
+Thu tu uu tien thuong la:
 
 1. Five/winning move.
 2. Open-four.
-3. Closed-four/block win.
-4. Double-threat.
+3. Closed-four hoac block win.
+4. Double threat.
 5. Open-three/broken-three.
 
-Tuy nhien, do nguy hiem thuc te phu thuoc vao context board.
+Tuy nhien context co the lam double open-three nguy hiem hon mot threat don le.
 
 **Can tranh:**
 
-> "Open-three luon thua closed-four."
+> "Open-three luon kem closed-four."
 
-Khong tuyet doi, vi double open-three co the rat nguy hiem.
+Double threat co the thay doi do nguy hiem.
 
-## 9. Evaluator can bang tan cong va phong thu nhu the nao?
+---
+
+## 14. Double threat la gi?
 
 **Tra loi ngan:**
 
-> Evaluator cham diem board dua tren attack score va defense score, ket hop pattern score va threat score. AI khong chi toi da hoa threat cua minh, ma con tinh den threat cua doi thu. Immediate block cung duoc xu ly truoc search de tranh bo qua nuoc phong thu bat buoc.
+> Double threat la khi mot nuoc di tao ra nhieu moi de doa cung luc, khien doi thu kho hoac khong the chan het trong mot luot.
 
 **Giai thich chi tiet:**
 
-Neu evaluator chi thien tan cong, AI co the bo qua doi thu sap thang. Du an giam rui ro bang:
-
-- Immediate win/block.
-- Threat detection cho ca hai ben.
-- Move reason nhu `blocking_win`, `blocking_open_four`, `reducing_threat`.
-- Tactical regression tests.
+Trong code, `ThreatSummary.double_threat` duoc tinh tu so forcing threats. AI co reason rieng nhu `creating_double_threat` va `blocking_double_threat`. Gomoku rat nhay voi double threat vi doi thu chi duoc di mot nuoc moi luot.
 
 **Can tranh:**
 
-> "Evaluator da toi uu hoan toan."
+> "Double threat luc nao cung thang."
 
-Nen noi evaluator van con la pattern-based va can cai tien.
+Khong phai luc nao cung thang, nhung la tin hieu chien thuat rat manh.
 
-## 10. Zobrist hashing va transposition table co vai tro gi?
+---
+
+## 15. Evaluator cham diem board nhu the nao?
 
 **Tra loi ngan:**
 
-> Zobrist hashing tao key nhanh cho trang thai board. Transposition table luu ket qua search cua cac trang thai da tinh de tranh tinh lai. Hash co tinh ca side-to-move de phan biet cung board nhung khac nguoi den luot.
+> Evaluator tinh diem cho AI va nguoi choi rieng, sau do lay `AI score - Human score`. Diem gom threat score va contiguous pattern score, vi du open-four, closed-four, open-three, chuoi 2/3/4 quan co dau mo.
 
 **Giai thich chi tiet:**
 
-Trong game tree, cung mot board co the dat duoc bang nhieu thu tu nuoc di. Neu khong cache, engine co the tinh lai. Transposition table luu depth, score, flag va co the luu best move. Du an hien co Zobrist hash va TT de ho tro search.
+`evaluator.py` dung `ThreatDetector.summary()` de cham threat va quet cac chuoi lien tiep de cham local pattern. Diem thang/thua va open-four duoc cho rat cao de uu tien cac tinh huong bat buoc.
 
 **Can tranh:**
 
-> "TT lam AI nho va hoc nhu neural network."
+> "Evaluator la oracle biet nuoc tot nhat."
 
-Sai. TT la cache search, khong phai learning model.
+Evaluator chi la heuristic approximation.
 
-## 11. Zobrist hash co collision khong? Neu co thi sao?
+---
+
+## 16. Tai sao tactical rules phai chay truoc minimax?
 
 **Tra loi ngan:**
 
-> Ve ly thuyet co the collision, vi hash la so huu han. Nhung voi 64-bit random keys, xac suat collision trong pham vi project rat thap. Du an chap nhan rui ro nay nhu nhieu engine game co dien.
+> Vi nhung tinh huong nhu thang ngay hoac doi thu sap thang khong can search sau. Xu ly truoc giup AI phan xa nhanh va tranh bo phi tai nguyen tinh toan.
 
 **Giai thich chi tiet:**
 
-Neu muon chac hon, co the luu them board signature hoac verify board khi lay entry tu TT. Hien tai project uu tien don gian va toc do, nen dung Zobrist hash theo cach thong dung.
+Pipeline chinh:
+
+```text
+Validate/normalize
+-> opening center
+-> immediate win
+-> immediate block
+-> double-threat/forcing checks
+-> candidate generation
+-> iterative deepening minimax
+```
+
+Neu AI co nuoc thang ngay, no nen danh luon thay vi mat thoi gian search.
 
 **Can tranh:**
 
-> "Khong the collision."
+> "Tactical rules chi la toi uu phu."
+
+Trong Gomoku, tactical fast-path la lop an toan rat quan trong.
+
+---
+
+## 17. Forcing move va threat extension la gi?
+
+**Tra loi ngan:**
+
+> Forcing move la nuoc tao ap luc khien doi thu gan nhu bat buoc phai tra loi, vi du open-four. Threat extension cho phep AI search them mot doan ngan khi leaf node van con forcing threat.
+
+**Giai thich chi tiet:**
+
+Neu depth da ve 0 nhung board con cac threat nguy hiem, dung evaluator ngay co the bi "horizon effect". Threat extension giam rui ro do bang cach search them mot vai forcing candidates, nhung gioi han de khong bi no branching.
+
+**Can tranh:**
+
+> "Day la full VCF solver."
+
+No chi la threat extension/forcing search gioi han.
+
+---
+
+## 18. Zobrist hash trong project dung de lam gi?
+
+**Tra loi ngan:**
+
+> Zobrist hash bien board thanh mot key 64-bit de tra cuu transposition table va loss memory. Hash nay giup AI nhan ra trang thai da tinh hoac trang thai tung co nuoc thua.
+
+**Giai thich chi tiet:**
+
+Moi o va moi loai quan co mot so random 64-bit co dinh. Hash board la XOR cua cac so tuong ung voi quan dang co tren board. O trong khong tham gia hash.
+
+**Can tranh:**
+
+> "Hash la ma hoa bao mat."
+
+Khong. Day la hash cho game search/cache.
+
+---
+
+## 19. Vi sao hash phai co side-to-move?
+
+**Tra loi ngan:**
+
+> Cung mot board nhung neu toi luot AI di se khac voi toi luot nguoi choi di. Vi vay search hash phai XOR them key cua side-to-move de khong dung nham cache.
+
+**Giai thich chi tiet:**
+
+Trong minimax, node maximizing va minimizing co y nghia khac nhau. Neu chi hash board, transposition table co the lay diem cua trang thai "AI den luot" de dung cho trang thai "human den luot", lam sai ket qua search.
+
+**Can tranh:**
+
+> "Board giong nhau thi ket qua search giong nhau."
+
+Khong dung neu khac nguoi den luot.
+
+---
+
+## 20. Transposition table luu nhung gi?
+
+**Tra loi ngan:**
+
+> Transposition table luu `depth`, `score`, `flag` va `best_move` cho moi search hash. No giup tai su dung ket qua khi game tree gap lai cung mot trang thai.
+
+**Giai thich chi tiet:**
+
+`flag` co 3 loai:
+
+| Flag | Y nghia |
+|---|---|
+| `EXACT` | Diem chinh xac |
+| `LOWERBOUND` | Diem la can duoi |
+| `UPPERBOUND` | Diem la can tren |
+
+Neu cached depth bang hoac sau hon depth hien tai, AI co the dung lai entry.
+
+**Can tranh:**
+
+> "Transposition table la tri nho hoc tap."
+
+No la cache search, khac learning model.
+
+---
+
+## 21. Zobrist hash co collision khong?
+
+**Tra loi ngan:**
+
+> Ve ly thuyet co, vi hash 64-bit la huu han. Nhung xac suat collision trong pham vi project rat thap, nen engine chap nhan nhu nhieu game engine co dien.
+
+**Giai thich chi tiet:**
+
+Neu muon chat che hon co the luu them board signature de verify. Hien tai project uu tien don gian va toc do.
+
+**Can tranh:**
+
+> "Khong bao gio collision."
 
 Ve ly thuyet la sai.
 
-## 12. Data train model den tu dau va co dang tin khong?
+---
+
+## 22. Loss memory da duoc trien khai chua?
 
 **Tra loi ngan:**
 
-> Data den tu arena/self-play JSONL. Tong du lieu khoang 1.78 trieu sample. Day la data phu hop de train supervised advisor, nhung vi sinh tu engine/self-play noi bo nen khong the coi la du lieu chuan toi uu nhu engine thi dau.
+> Da. Backend co `loss_memory`, frontend gui lich su cac nuoc AI khi nguoi choi thang. Backend ghi lai board truoc nuoc AI va nuoc AI da danh, sau do lan sau gap lai board do thi phat nang nuoc tung dan toi thua.
 
 **Giai thich chi tiet:**
 
-Data co gia tri vi:
+Luong hien tai:
 
-- Cung format voi board backend.
-- Co nhieu sample.
-- Phan anh distribution nuoc di ma engine gap trong self-play.
+```text
+AI danh -> frontend luu board truoc nuoc AI
+-> nguoi choi thang
+-> POST /api/report-game-result
+-> backend record_game_outcome()
+-> save vao backend/gomoku_tt.pkl
+-> lan sau _loss_memory_penalty() tru diem nuoc cu
+```
 
-Gioi han:
-
-- Neu AI sinh data chua manh, model co the hoc lai diem yeu.
-- Cac sample co prob all-zero/reward 0 can loc khi train policy.
-- Can benchmark doc lap de danh gia model.
+Penalty hien tai la `2_500_000` moi lan thua.
 
 **Can tranh:**
 
-> "Data self-play dam bao model hoc nuoc dung."
+> "Loss memory la reinforcement learning."
 
-Khong dam bao. Chi la supervised signal.
+Khong. No la bo nho kinh nghiem don gian dua tren hash board, khong co training policy/value.
 
-## 13. Neu data sinh tu AI chua manh, model co hoc lai diem yeu khong?
+---
+
+## 23. Moi khi backend khoi dong co load lai cache va loss memory khong?
 
 **Tra loi ngan:**
 
-> Co, do la rui ro thuc te. Vi vay nhom khong dung model lam player doc lap. Model chi lam advisor va policy prior. Quyet dinh cuoi cung van duoc bao ve bang immediate win/block, threat detection va alpha-beta search.
+> Co. Khi `GomokuAI` duoc tao, no goi `load_memory()` de doc `backend/gomoku_tt.pkl`, load ca transposition table va loss memory. Khi tat backend binh thuong, `atexit` se save lai.
 
 **Giai thich chi tiet:**
 
-Model hoc theo distribution du lieu. Neu du lieu co bias, model co the lap lai bias. Cac cach cai tien:
+`main.py` tao AI bang:
 
-- Sinh data tu engine manh hon.
-- Loc tactical mistakes.
-- Them benchmark tactical vao validation.
-- Ket hop data tu nhieu difficulty.
-- Chay A/B self-play de do playing strength.
+```python
+GomokuAI(memory_filename=BACKEND_DIR / "gomoku_tt.pkl")
+```
+
+`get_ai()` co `@lru_cache`, nen moi difficulty chi tao AI instance mot lan trong vong doi backend process. Cache khong load lai moi request, ma load khi instance duoc tao lan dau.
 
 **Can tranh:**
 
-> "Nhieu data thi se tu het bias."
+> "Moi request deu doc file pkl."
 
-Nhieu data khong dam bao het bias neu source data cung bias.
+Khong. AI instance duoc cache trong process.
 
-## 14. Top-1 accuracy 40.244% co tot khong?
+---
+
+## 24. Loss memory co gioi han gi?
 
 **Tra loi ngan:**
 
-> Tot hon baseline rat nhieu, nhung chua du de model tu quyet dinh. Random legal top-1 khoang 0.585%, center-first khoang 2.352%, con CNN dat 40.244%. Ket qua nay tot cho advisor/top-k prior, nhung chua du de claim model la engine manh.
+> Co. No ghi tat ca nuoc AI trong van thua, khong phan biet chinh xac nuoc nao la sai lam quyet dinh. Vi vay no huu ich de tranh lap lai duong thua cu, nhung khong phai hoc chien luoc tong quat.
 
 **Giai thich chi tiet:**
 
-Trong game board 15x15, mot trang thai co nhieu nuoc hop ly gan nhau, nen top-1 khong nhat thiet phai gan 100%. Top-3 59.974% va top-5 69.194% cho thay model co kha nang dua nuoc hop ly vao nhom de xet. Do do top-k prior la cach dung phu hop hon so voi cho model tu danh.
+Rui ro:
+
+- Phat ca nuoc khong thuc su sai.
+- Chi khop khi gap lai board hash cu.
+- Chua tong quat hoa sang cac the tuong tu.
+- Arena self-play hien khong truc tiep report loss memory cho play backend.
+
+Huong cai tien: chi record late-game blunder, giam trong so theo thoi gian, hoac ket hop phan tich tactical.
 
 **Can tranh:**
 
-> "40% la thap nen model vo dung."
+> "Loss memory lam AI cang choi cang thong minh tong quat."
 
-Khong dung. No co ich trong top-k advisor, nhung khong du lam player doc lap.
+No chi la memory cuc bo.
 
-## 15. Legal mask la gi va vi sao quan trong?
+---
+
+## 25. CNN Consultant Model la gi?
 
 **Tra loi ngan:**
 
-> Legal mask la buoc gan diem rat thap cho cac o da co quan truoc khi softmax/top-k, de model khong chon nuoc bat hop le. Trong ket qua, illegal top-1 sau mask bang 0, nghia la output cuoi cung khong goi y o da bi chiem.
+> CNN Consultant la model policy-value supervised, nhan board 15x15 va goi y top-K nuoc di hop le. Trong project, no dong vai tro co van va policy prior, khong thay the AI core.
 
 **Giai thich chi tiet:**
 
-Policy head tra 225 logits cho ca board. Neu khong mask, model co the cho xac suat cao vao o da co quan. Legal mask dung occupancy cua board goc de loai cac o nay. Vi the illegal top-1 before mask co the cao, nhung after mask bang 0.
+Input duoc encode thanh 3 channel:
+
+1. Quan cua player dang xet.
+2. Quan doi thu.
+3. O trong.
+
+Model co `policy_head` tra logits cho 225 o va `value_head` tra gia tri board tu -1 den 1. Trong AI core, policy probabilities duoc dung de sap xep candidate; value head chu yeu dung nhu thong tin phu/consultant.
+
+**Can tranh:**
+
+> "Model CNN la thanh phan quyet dinh nuoc di chinh."
+
+Quyet dinh cuoi cung van dua tren classical search.
+
+---
+
+## 26. Policy prior la gi?
+
+**Tra loi ngan:**
+
+> Policy prior la xac suat nuoc di tu CNN duoc doi thanh bonus de sap xep candidate. Cong thuc la `bonus = probability * policy_prior_weight`.
+
+**Giai thich chi tiet:**
+
+Trong Medium:
+
+```text
+policy_prior_weight = 10,000
+policy_prior_top_k = 24
+```
+
+Trong Hard:
+
+```text
+policy_prior_weight = 20,000
+policy_prior_top_k = 32
+```
+
+Policy prior chi anh huong thu tu xet nuoc o root search. Neu model khong load duoc, bonus bang 0 va engine quay ve classical mode.
+
+**Can tranh:**
+
+> "Policy prior chon luon nuoc di."
+
+Khong. No chi ho tro ordering.
+
+---
+
+## 27. Neu model CNN goi y sai thi AI co bi sai theo khong?
+
+**Tra loi ngan:**
+
+> Rui ro co, nhung duoc han che vi CNN khong hard-prune candidate va khong bo qua tactical rules. Immediate win/block, double threat va forcing checks van chay truoc search.
+
+**Giai thich chi tiet:**
+
+CNN chi cong bonus cho candidate ordering. Cac nuoc forcing van duoc giu lai. Sau do minimax/alpha-beta va evaluator van kiem tra cac line search. Do do model sai co the lam ordering kem hon, nhung khong truc tiep ep AI danh nuoc sai.
+
+**Can tranh:**
+
+> "Model sai khong anh huong gi ca."
+
+Co the anh huong ordering/latency/chon candidate trong mot so truong hop, nhung da co co che bao ve.
+
+---
+
+## 28. Legal mask la gi?
+
+**Tra loi ngan:**
+
+> Legal mask la buoc gan diem rat thap cho cac o da co quan truoc khi softmax/top-K, de model khong goi y nuoc bat hop le.
+
+**Giai thich chi tiet:**
+
+Policy head tra logits cho ca 225 o. Nhung mot so o da co quan, nen `predict_policy.py` dung occupied mask de loai cac o nay. Sau mask, top-K chi gom o trong hop le.
 
 **Can tranh:**
 
 > "Model tu hieu luat nen khong can mask."
 
-Khong nen noi vay. Mask la lop bao ve bat buoc.
+Mask la lop bao ve bat buoc.
 
-## 16. Model co that su cai thien quyet dinh cua AI chinh khong?
+---
+
+## 29. Hybrid AI trong slide nghia la gi?
 
 **Tra loi ngan:**
 
-> Hien tai co the noi model cai thien pipeline bang advisor va policy prior, nhung chua du bang chung de ket luan playing strength tang ro ret. A/B benchmark cuc bo cho thay hybrid khong pha tactical rules va completed depth tuong duong, nhung can self-play A/B nhieu van hon.
+> Hybrid o day nghia la classical engine la thanh phan quyet dinh chinh, con CNN consultant ho tro bang advisor va policy prior. No khong phai hybrid theo nghia AlphaZero/MCTS/RL day du.
 
 **Giai thich chi tiet:**
 
-Model co the cai thien move ordering neu dua move tot len som, giup alpha-beta prune tot hon. Tuy nhien benchmark hien tai nho:
+Classical engine dam nhiem:
 
-- Tactical cases da duoc classical rules xu ly tot.
-- Midgame cases gan time limit nen latency khong giam ro.
-- Chua co tournament self-play du lon.
+- Immediate win/block.
+- Threat detection.
+- Evaluator.
+- Minimax/alpha-beta.
+- Time-limited search.
 
-Vay ket luan dung muc la "co tiem nang va da tich hop an toan", khong phai "chac chan manh hon".
+CNN ho tro:
+
+- Goi y top-K cho nguoi dung.
+- Cong policy prior vao move ordering.
 
 **Can tranh:**
 
-> "Co model nen AI thong minh hon chac chan."
+> "Hybrid AI nen AI cua minh ngang neural engine."
 
-Day la claim de bi hoi vat.
+Khong co bang chung va khong dung pham vi.
 
-## 17. A/B benchmark cua nhom da du chua?
+---
+
+## 30. Data train CNN den tu dau?
 
 **Tra loi ngan:**
 
-> Chua du de ket luan suc choi tong quat. No du de kiem tra tich hop ban dau: hybrid khong pha opening, winning move, blocking move va giu completed depth tuong duong trong mot so case. De ket luan manh hon, can A/B self-play nhieu van voi cung time limit.
+> Data den tu self-play/arena JSONL va cac sample duoc chuan hoa. Day la du lieu phu hop de train supervised advisor, nhung vi sinh tu engine noi bo nen khong the coi la label toi uu tuyet doi.
 
 **Giai thich chi tiet:**
 
-A/B hien tai co gia tri vi:
+Arena co the luu:
 
-- Cung Medium config.
-- Cung depth/candidate/time limit.
-- Model warm-up truoc khi do.
-- Co case tactical va non-forcing.
+- Board goc.
+- Normalized board.
+- Move duoc chon.
+- Evaluation.
+- Winner.
+- Outcome.
 
-Nhung han che:
-
-- So case nho.
-- Chua phai tournament.
-- Chua co confidence interval.
-- Chua so sanh win-rate.
+Model hoc bat chuoc phan phoi nuoc di trong data. Neu data co bias, model co the hoc lai bias.
 
 **Can tranh:**
 
-> "A/B nay chung minh hybrid tot hon classical."
+> "Self-play data dam bao model hoc nuoc dung."
 
-Nen noi "cho thay hybrid tich hop an toan".
+Khong dam bao. Can validation va benchmark rieng.
 
-## 18. Vi sao latency hybrid khong giam ro ret?
+---
+
+## 31. Top-1 accuracy khoang 40% co tot khong?
 
 **Tra loi ngan:**
 
-> Vi cac case non-forcing van gan cham time limit Medium. Policy prior co the thay doi thu tu candidate, nhung neu search van chay den gan deadline thi latency trung binh khong giam ro. Model inference sau warm-up chi khoang 1-2 ms, khong phai nut that lon.
+> Tot hon baseline random va center-first rat nhieu, nhung chua du de model tu danh doc lap. Ket qua nay phu hop voi vai tro advisor/top-K prior hon la thay the minimax.
+
+**Giai thich chi tiet:**
+
+Trong Gomoku, mot board co the co nhieu nuoc hop ly. Top-3 va Top-5 quan trong vi model chi can dua nuoc tot vao nhom ung vien. Vi vay dung model lam prior la hop ly hon dung lam player doc lap.
+
+**Can tranh:**
+
+> "40% chung minh model da manh."
+
+No chung minh model hoc duoc distribution, khong chung minh suc choi tong quat.
+
+---
+
+## 32. Benchmark Classical vs Hybrid da chung minh dieu gi?
+
+**Tra loi ngan:**
+
+> Benchmark hien tai chu yeu chung minh hybrid tich hop an toan: khong pha tactical rules, khong chon illegal move va van giu duoc completed depth/latency hop ly. Chua du de ket luan hybrid manh hon tong quat.
+
+**Giai thich chi tiet:**
+
+De ket luan playing strength, can A/B self-play nhieu van voi cung time limit, do win rate, confidence interval, latency va tactical accuracy. Benchmark nho chi la bang chung ban dau.
+
+**Can tranh:**
+
+> "Hybrid chac chan manh hon classical."
+
+Chua co bang chung du lon.
+
+---
+
+## 33. Vi sao latency hybrid khong giam ro ret?
+
+**Tra loi ngan:**
+
+> Vi trong cac case non-forcing, iterative deepening thuong search den gan time limit. Policy prior co the doi thu tu candidate, nhung neu search van dung het deadline thi latency khong nhat thiet giam.
 
 **Giai thich chi tiet:**
 
@@ -358,36 +731,167 @@ Latency phu thuoc vao:
 
 - Time limit.
 - Candidate count.
-- Branching factor.
 - Move ordering.
 - Transposition table hit.
 - Tactical fast-path.
+- Model inference.
 
-Trong tactical cases, engine tra nhanh truoc search sau. Trong non-forcing cases, engine search den deadline, nen prior chua chac lam giam elapsed time.
+Sau warm-up, inference model co the nho, nhung search van la phan ton thoi gian chinh.
 
 **Can tranh:**
 
-> "Hybrid nhanh hon."
+> "Hybrid nhanh hon trong moi case."
 
-Chi co mot vai case nhanh hon; tong quat chua ro.
+Khong nen noi qua muc.
 
-## 19. Nhom co so sanh voi Rapfi/Yixin/AlphaZero-Gomoku khong?
+---
+
+## 34. Easy, Medium, Hard khac nhau the nao?
 
 **Tra loi ngan:**
 
-> Khong so sanh truc tiep. Nhom chi so sanh theo phuong phap va baseline noi bo. Rapfi/Yixin la engine chuyen sau, AlphaZero-Gomoku la huong RL/MCTS/neural network khac. Du an khong claim manh hon cac he thong do.
+> Easy uu tien nhanh, depth va candidate limit thap. Medium can bang giua toc do va chat luong. Hard search sau hon, radius/candidate/time limit cao hon va policy prior manh hon.
 
 **Giai thich chi tiet:**
 
-Ly do khong so sanh truc tiep:
+Config hien tai:
 
-- Can cung rule set.
-- Can adapter engine.
-- Can nhieu van dau.
-- Can cung hardware/time control.
-- Vuot pham vi mon hoc.
+| Difficulty | Depth | Candidate radius | Candidate limit | Time limit | Policy |
+|---|---:|---:|---:|---:|---|
+| Easy | 2 | 2 | 8 | 400 ms | Tat |
+| Medium | 3 | 2 | 10 | 1200 ms | Weight 10,000 |
+| Hard | 4 | 3 | 12 | 2200 ms | Weight 20,000 |
 
-Framing dung la: project minh hoa classical search + Gomoku threat knowledge + supervised advisor.
+**Can tranh:**
+
+> "Hard luon danh toi uu."
+
+Hard chi search sau hon trong gioi han.
+
+---
+
+## 35. Frontend goi backend qua endpoint nao?
+
+**Tra loi ngan:**
+
+> Endpoint chinh la `POST /api/get-move`. Ngoai ra co `GET /api/health`, `POST /api/get-consultation` cho consultant va `POST /api/report-game-result` de report loss memory.
+
+**Giai thich chi tiet:**
+
+Request `get-move` gom board, player va difficulty. Response gom row, col, evaluation, reason, difficulty, completed_depth va message.
+
+**Can tranh:**
+
+> "Frontend tu tinh reason."
+
+Reason tra tu backend AI.
+
+---
+
+## 36. Frontend co giup loss memory nhu the nao?
+
+**Tra loi ngan:**
+
+> Moi lan AI danh, frontend luu board truoc nuoc AI va toa do AI. Neu nguoi choi thang, frontend gui lich su do len `/api/report-game-result` de backend ghi loss memory.
+
+**Giai thich chi tiet:**
+
+Frontend khong hoc truc tiep. No chi dong vai tro thu thap history vong game. Backend moi la noi normalize, hash va save memory.
+
+**Can tranh:**
+
+> "Loss memory tu dong hoc moi van."
+
+Hien tai chi ghi khi nguoi choi thang va frontend report duoc.
+
+---
+
+## 37. Arena mode dung de lam gi?
+
+**Tra loi ngan:**
+
+> Arena mode cho AI tu dau voi AI, sinh sample JSONL de phan tich, benchmark hoac train model sau nay. No cung giup demo self-play va smoke test engine.
+
+**Giai thich chi tiet:**
+
+Arena co API rieng:
+
+```http
+GET /arena/api/health
+POST /arena/api/self-play
+```
+
+Sample co board, normalized board, move, evaluation, winner va outcome. Normalized board giup nguoi dang di luon duoc nhin nhu player `1`.
+
+**Can tranh:**
+
+> "Arena la reinforcement learning."
+
+Hien tai arena sinh data/self-play, khong tu cap nhat policy bang RL.
+
+---
+
+## 38. Neu khong co model CNN thi he thong co chay duoc khong?
+
+**Tra loi ngan:**
+
+> Co. CNN consultant la optional. Neu PyTorch hoac checkpoint khong co, `predict_policy` tra `model_available = false`, policy prior bang 0 va classical engine van chay binh thuong.
+
+**Giai thich chi tiet:**
+
+Backend tach `requirements.txt` co ban va `requirements-ml.txt` cho ML. Dieu nay giup deploy backend classical nhe hon va khong phu thuoc GPU.
+
+**Can tranh:**
+
+> "Model la dependency bat buoc cua AI."
+
+Khong dung.
+
+---
+
+## 39. Tai sao khong dung AlphaZero hoac reinforcement learning?
+
+**Tra loi ngan:**
+
+> Vi AlphaZero can self-play RL, MCTS, training lap lai va tai nguyen tinh toan lon. Pham vi project tap trung vao classical AI de giai thich duoc, co the demo realtime va ket hop CNN supervised nhu advisor.
+
+**Giai thich chi tiet:**
+
+AlphaZero-style can:
+
+- Policy-value network.
+- MCTS moi move.
+- Self-play training nhieu vong.
+- GPU/compute va benchmark lon.
+
+Project hien tai khong claim RL, khong train online, khong phai AlphaZero thu nho.
+
+**Can tranh:**
+
+> "CNN cua minh la AlphaZero."
+
+Khong dung.
+
+---
+
+## 40. Co so sanh voi Rapfi/Yixin khong?
+
+**Tra loi ngan:**
+
+> Khong so sanh truc tiep. Rapfi va Yixin la engine Gomoku/Renju chuyen sau. Du an chi so sanh theo phuong phap va baseline noi bo, khong claim manh hon cac engine do.
+
+**Giai thich chi tiet:**
+
+Muon so sanh cong bang can:
+
+- Cung rule set.
+- Adapter engine.
+- Cung time control.
+- Nhieu van dau.
+- Cung hardware.
+- Thong ke win rate.
+
+Vuot pham vi project hien tai.
 
 **Can tranh:**
 
@@ -395,138 +899,243 @@ Framing dung la: project minh hoa classical search + Gomoku threat knowledge + s
 
 Khong co bang chung.
 
-## 20. Neu co them 2 tuan, nhom uu tien cai tien gi?
+---
+
+## 41. AI hien tai co manh khong?
 
 **Tra loi ngan:**
 
-> Em se uu tien mo rong A/B benchmark va tactical suite truoc, sau do cai thien evaluator/threat detector. Ly do la phai co benchmark du tot moi biet cai tien co that su giup AI hay khong. Sau do moi tang vai tro model hoac them VCF-lite/TSS-lite.
+> AI xu ly duoc cac tactical case co ban va choi hop ly trong demo, nhung chua nen claim la manh theo chuan thi dau. Suc manh bi gioi han boi depth, candidate pruning, evaluator va benchmark hien tai con nho.
 
 **Giai thich chi tiet:**
 
-Thu tu uu tien hop ly:
+Minh co the noi:
 
-1. A/B self-play nhieu van: do win-rate, latency, illegal move, completed depth.
-2. Tactical suite: broken-four, double-threat, diagonal forcing, defense traps.
-3. Evaluator/threat detector: giam false positive/false negative.
-4. Transposition table luu best move de cai thien ordering.
-5. VCF-lite/TSS-lite cho cac chuoi forcing.
-6. Data/model: train voi data chat luong hon, them tactical validation.
+- Co immediate win/block.
+- Co threat detection.
+- Co alpha-beta va time limit.
+- Co TT va loss memory.
+- Co tactical benchmark noi bo.
+
+Nhung can them self-play A/B lon hon de ket luan suc choi tong quat.
 
 **Can tranh:**
 
-> "Tang depth la xong."
+> "AI danh tot moi the co."
 
-Tang depth co the lam cham rat nhanh neu khong cai thien ordering/evaluator/benchmark.
+Khong nen noi.
 
-## 21. Vi sao khong dung model neural network de danh truc tiep nhu AlphaZero?
+---
+
+## 42. Cac test hien tai kiem tra gi?
 
 **Tra loi ngan:**
 
-> Vi pham vi du an va chat luong model hien tai chua phu hop. AlphaZero can self-play RL, MCTS va nhieu tai nguyen train. Model cua nhom la supervised CNN, top-1 khoang 40%, nen phu hop lam advisor/prior hon la player doc lap.
+> Test tap trung vao syntax/compile, tactical cases, policy prior ordering, consultant API va arena smoke test. Muc tieu la dam bao engine khong loi co ban va cac co che AI chinh van hoat dong.
 
 **Giai thich chi tiet:**
 
-AlphaZero-style gom:
+Nhom test co the bao gom:
 
-- Neural policy-value network.
-- MCTS trong moi move.
-- Self-play RL lap lai nhieu vong.
-- Training compute lon.
-
-Du an hien tai tap trung classical AI explainable, nen tich hop model nhu prior la cach vua suc va an toan.
+- `py_compile` backend/arena/dl.
+- Tactical cases: immediate win/block, broken-four, double-threat.
+- Policy prior ordering.
+- Consultant fallback/model API.
+- Arena smoke test.
 
 **Can tranh:**
 
-> "Model cua nhom la AlphaZero thu nho."
+> "Tests pass nen AI da manh."
 
-Khong dung.
+Tests chi chung minh hanh vi da test la dung.
 
-## 22. Heuristic evaluator co the bi overfit vao benchmark khong?
+---
+
+## 43. Han che lon nhat cua AI hien tai la gi?
 
 **Tra loi ngan:**
 
-> Co kha nang neu chi toi uu theo vai case benchmark. Vi vay benchmark can mo rong va tach tactical tests thanh nhieu nhom. Hien tai nhom chi ket luan AI xu ly tot cac case co ban, khong ket luan tong quat cho moi the co.
+> Han che lon nhat la search van bi gioi han boi branching factor va time limit, threat detection con pattern-based, benchmark chua du lon va CNN prior chua du bang chung de claim tang playing strength tong quat.
 
 **Giai thich chi tiet:**
 
-De giam overfit benchmark:
+Co the neu 4 diem:
 
-- Them nhieu case khac nhau.
-- Randomize midgame positions.
-- Chay self-play A/B.
-- Giu regression tests cho bug cu.
-- Kiem tra latency va completed depth.
+1. Chua co full Threat Space Search/VCF.
+2. Candidate pruning co the bo sot chien luoc xa.
+3. Evaluator co the sai o the phuc tap.
+4. CNN hoc tu data noi bo nen co the hoc lai bias.
 
 **Can tranh:**
 
-> "Benchmark 8/8 nen AI da tot."
+> "Khong co han che dang ke."
 
-8/8 chi co nghia dung tren benchmark do.
+Giang vien rat de hoi xoay.
 
-## 23. Neu nguoi choi danh mot nuoc bat ngo hoac xa vung trung tam, AI co xu ly khong?
+---
+
+## 44. Neu co them thoi gian, nhom se cai tien gi?
 
 **Tra loi ngan:**
 
-> AI van validate board va sinh candidate quanh cac quan da co. Neu nguoi choi danh xa, vung candidate se mo quanh quan do. Tuy nhien, candidate pruning co gioi han radius/limit, nen cac chien luoc xa phuc tap co the chua duoc xu ly toi uu.
+> Uu tien dau tien la mo rong benchmark va tactical suite, sau do cai thien threat detector/evaluator, them VCF-lite/TSS-lite, roi moi toi uu search nhu killer move, history heuristic, PVS hoac parallel root search.
 
 **Giai thich chi tiet:**
 
-Board 15x15 lon nen engine chap nhan trade-off:
+Thu tu hop ly:
 
-- Candidate gan quan giup chay nhanh.
-- Tactical fast-path giup tranh loi mot nuoc.
-- Nhung long-term global strategy chua phai diem manh.
+1. Tactical benchmark lon hon.
+2. A/B self-play Classical vs Hybrid.
+3. Broken-four/double-threat evaluator tot hon.
+4. VCF-lite hoac TSS-lite cho forcing lines.
+5. Search optimization: killer/history/PVS.
+6. Data/model: train voi data chat luong hon.
 
 **Can tranh:**
 
-> "AI xu ly tot moi chien luoc bat ngo."
+> "Chi can tang depth."
 
-Khong co bang chung.
+Tang depth lam cham rat nhanh neu khong giam branching factor.
 
-## 24. Cac test hien tai kiem tra cai gi?
+---
+
+## 45. Slide co chu "THREAD DECTECTION", neu bi hoi thi tra loi sao?
 
 **Tra loi ngan:**
 
-> Test hien tai tap trung vao syntax/compile, tactical cases, policy prior ordering, consultant API va arena smoke test. Muc tieu la dam bao engine khong bi loi co ban, tactical fast-path con dung va model integration khong pha backend.
+> Do la loi chinh ta tren slide, dung phai la `THREAT DETECTION`. Phan code va noi dung ky thuat dang noi ve nhan dien threat trong Gomoku, khong phai thread.
 
 **Giai thich chi tiet:**
 
-Nhung nhom test chinh:
-
-- Python compile backend/arena/dl.
-- `tests.test_policy_prior_ordering`: prior chi anh huong khi bat, khong dung sai luc.
-- `tests.test_tactical_cases`: immediate win/block va case chien thuat.
-- `tests.test_consultant_api`: model path, fallback, validation.
-- Arena smoke: chay self-play nho.
+Co the noi nhom se sua typo trong ban nop cuoi. Sau do quay lai noi dung chinh: threat detection gom open-four, closed-four, open-three, broken-three va double-threat.
 
 **Can tranh:**
 
-> "Tests pass nen AI manh."
+> "Thread cung duoc."
 
-Tests pass chi chung minh cac hanh vi da test dung.
+Khong. Thread va threat khac nhau.
 
-## 25. Tai sao Easy tat policy prior, con Medium/Hard bat?
+---
+
+## 46. Cau hoi demo: Neu backend offline thi sao?
 
 **Tra loi ngan:**
 
-> Easy uu tien toc do va don gian, nen tat policy prior. Medium va Hard co time limit lon hon, nen co the dung model prior de sap xep candidate. Day cung giup demo ro su khac biet giua che do nhanh va che do co hybrid.
+> Frontend se bao backend unreachable va khong choi tiep duoc AI move cho den khi FastAPI backend chay lai. Day la hanh vi fallback UI, khong phai loi AI core.
 
 **Giai thich chi tiet:**
 
-Policy prior co chi phi inference nho sau warm-up, nhung van la mot thanh phan phu. Easy nen tra nhanh va tranh phu thuoc model. Medium/Hard co search sau hon, move ordering quan trong hon, nen prior co y nghia hon.
+Backend mac dinh chay o `http://127.0.0.1:8000`. Frontend goi API qua base URL/proxy. Neu request fail, UI set backend status offline va hien thong bao.
 
 **Can tranh:**
 
-> "Easy yeu vi khong co model."
+> "Frontend van co AI offline."
 
-Easy duoc thiet ke uu tien latency, khong phai phien ban day du.
+Khong, AI chinh nam backend.
 
-## Tom Tat Cau Tra Loi An Toan Nhat
+---
 
-Neu bi hoi bat ngo, co the dua ve 5 y sau:
+## 47. Neu nguoi choi danh nuoc rat bat ngo hoac xa trung tam thi AI co xu ly khong?
 
-1. AI chinh la classical search engine, model chi la advisor/policy prior.
-2. Tactical rules nhu immediate win/block duoc xu ly truoc search sau.
-3. Model top-1 40.244% tot hon baseline nhung chua du lam player doc lap.
-4. A/B benchmark cho thay hybrid tich hop an toan, chua chung minh manh hon ro ret.
-5. Gioi han tiep theo la can A/B self-play nhieu van, tactical suite lon hon va evaluator/threat detector tot hon.
+**Tra loi ngan:**
+
+> AI van validate board va sinh candidate quanh cac quan da co, bao gom quan moi cua nguoi choi. Tuy nhien, cac chien luoc xa phuc tap van la gioi han cua candidate pruning.
+
+**Giai thich chi tiet:**
+
+Ngay khi nguoi choi dat mot quan xa, vung candidate moi se mo quanh quan do. AI se co the phan ung gan khu vuc nay. Nhung vi khong duyet toan bo board, khong nen claim no xu ly toi uu moi chien luoc toan cuc.
+
+**Can tranh:**
+
+> "AI khong bi anh huong boi pruning."
+
+Pruning luon la trade-off.
+
+---
+
+## 48. Neu vua co nuoc thang cho AI vua doi thu cung dang doa thang thi AI chon gi?
+
+**Tra loi ngan:**
+
+> AI uu tien immediate win truoc. Neu AI co nuoc thang ngay, danh nuoc do ket thuc game, khong can chon block.
+
+**Giai thich chi tiet:**
+
+Pipeline trong `GomokuAI` kiem tra:
+
+1. AI winning move.
+2. Human winning move de block.
+3. Double threat/forcing checks.
+
+Thu tu nay hop ly vi thang ngay tot hon chan doi thu.
+
+**Can tranh:**
+
+> "AI luon block truoc."
+
+Khong, neu AI co the thang ngay thi phai thang.
+
+---
+
+## 49. Vi sao reason trong response quan trong?
+
+**Tra loi ngan:**
+
+> `reason` giup giai thich vi sao AI chon nuoc do, vi du `winning_move`, `blocking_win`, `creating_open_four`, `building_attack`. No lam AI de debug va de trinh bay hon so voi chi tra toa do.
+
+**Giai thich chi tiet:**
+
+Reason duoc phan loai tu move ordering/threat summary. No khong phai giai thich hoan hao nhu proof tree, nhung du de UI va nguoi xem hieu do la nuoc tan cong, phong thu hay search score.
+
+**Can tranh:**
+
+> "Reason la chung minh toan hoc cho nuoc toi uu."
+
+No la nhan loai heuristic.
+
+---
+
+## 50. Cau ket luan an toan nhat neu bi hoi tong quat la gi?
+
+**Tra loi ngan:**
+
+> Du an khong nham vuot cac engine thi dau, ma minh hoa cach xay mot AI Gomoku 15x15 thuc dung va giai thich duoc: classical search la loi chinh, threat knowledge giup xu ly chien thuat, cache/time limit giup realtime, CNN consultant chi ho tro advisor va policy prior.
+
+**Giai thich chi tiet:**
+
+Neu can tom tat trong 5 y:
+
+1. Core la minimax/alpha-beta, khong phai RL.
+2. Tactical rules chay truoc deep search.
+3. Candidate generation giam branching factor.
+4. Hash/TT/loss memory giup tai su dung va tranh lap loi cu.
+5. CNN la ho tro hybrid, khong thay the engine.
+
+**Can tranh:**
+
+> "AI cua nhom da rat manh/gan SOTA."
+
+Khong nen claim qua muc.
+
+---
+
+# Nhom Cau Hoi Can Hoc Thuoc
+
+Neu thoi gian on tap it, uu tien 12 cau sau:
+
+1. Hybrid AI trong project nghia la gi?
+2. Policy prior co quyet dinh nuoc di khong?
+3. Vi sao tactical rules chay truoc minimax?
+4. Candidate generation giam branching factor nhu the nao?
+5. Threat detection hoat dong bang pattern `0/1/2` ra sao?
+6. Evaluator tinh `AI score - Human score` nhu the nao?
+7. Zobrist hash va side-to-move de lam gi?
+8. Transposition table khac loss memory nhu the nao?
+9. Loss memory co phai reinforcement learning khong?
+10. Neu khong co CNN model thi backend co chay khong?
+11. Benchmark hien tai chung minh gi va chua chung minh gi?
+12. Han che va huong phat trien tiep theo la gi?
+
+# Cau Tra Loi Mau 1 Phut
+
+> Du an cua nhom la Gomoku/Caro 15x15, khong phai tic-tac-toe 3x3. Core AI la classical game search: minimax, alpha-beta pruning, iterative deepening, candidate generation, move ordering, threat detection va heuristic evaluator. Vi board 15x15 co branching factor rat lon, AI khong duyet tat ca o ma chi xet candidate quanh cac quan da co, dong thoi uu tien tactical rules nhu thang ngay, chan thang, double threat va forcing moves. Zobrist hash va transposition table giup cache trang thai search, con loss memory giup tranh lap lai mot so nuoc tung dan toi thua. CNN consultant chi la thanh phan ho tro: goi y top-K va policy prior cho move ordering, khong thay the minimax. Nhom khong claim manh hon engine chuyen nghiep; muc tieu la minh hoa mot AI Gomoku thuc dung, giai thich duoc va co benchmark noi bo.

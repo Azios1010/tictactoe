@@ -1,5 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import Board from './components/Board'
+import {
+  AI_FIRST,
+  HUMAN_FIRST,
+  getNextFirstPlayer
+} from './playTurn'
 
 const BOARD_SIZE = 15
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? ''
@@ -118,6 +123,7 @@ function App() {
   const [aiMoveHistory, setAiMoveHistory] = useState([])
   const [backendStatus, setBackendStatus] = useState('idle')
   const [difficulty, setDifficulty] = useState('medium')
+  const [firstPlayer, setFirstPlayer] = useState(HUMAN_FIRST)
   const [arenaBatchSize, setArenaBatchSize] = useState(10)
   const [arenaSummary, setArenaSummary] = useState(null)
   const [arenaPlayback, setArenaPlayback] = useState([])
@@ -164,10 +170,13 @@ function App() {
     playbackTimersRef.current = []
   }
 
-  function resetPlayMode() {
+  function resetPlayMode(nextFirstPlayer = HUMAN_FIRST) {
     clearArenaPlaybackTimers()
-    setBoard(createEmptyBoard())
-    setStatus('You move first as X.')
+    const emptyBoard = createEmptyBoard()
+
+    setBoard(emptyBoard)
+    setFirstPlayer(nextFirstPlayer)
+    setStatus(nextFirstPlayer === AI_FIRST ? 'AI is preparing the opening move...' : 'You move first as X.')
     setIsThinking(false)
     setGameOver(false)
     setLastMove(null)
@@ -180,10 +189,14 @@ function App() {
     setBackendStatus('idle')
     setConsultantMoves([])
     setConsultantValue(0)
+
+    if (nextFirstPlayer === AI_FIRST) {
+      void requestAiMove(emptyBoard)
+    }
   }
 
   async function fetchConsultantAdvice(currentBoard) {
-    if (gameOver || isThinking || mode !== 'play') {
+    if (gameOver || isThinking || mode !== 'play' || (firstPlayer === AI_FIRST && aiLastMove == null)) {
       return
     }
 
@@ -224,14 +237,20 @@ function App() {
   }
 
   useEffect(() => {
-    if (mode !== 'play' || !showConsultant || gameOver || isThinking) {
+    if (
+      mode !== 'play' ||
+      !showConsultant ||
+      gameOver ||
+      isThinking ||
+      (firstPlayer === AI_FIRST && aiLastMove == null)
+    ) {
       setConsultantMoves([])
       setConsultantValue(0)
       return
     }
 
     void fetchConsultantAdvice(board)
-  }, [board, showConsultant, gameOver, isThinking, mode])
+  }, [board, showConsultant, gameOver, isThinking, mode, firstPlayer, aiLastMove])
 
 
   function resetArenaBoard(message = 'Arena ready. Run self-play to collect new samples.') {
@@ -253,7 +272,7 @@ function App() {
   function switchMode(nextMode) {
     setMode(nextMode)
     if (nextMode === 'play') {
-      resetPlayMode()
+      resetPlayMode(HUMAN_FIRST)
       return
     }
     resetArenaBoard()
@@ -347,7 +366,13 @@ function App() {
   }
 
   function handleSquareClick(row, col) {
-    if (mode !== 'play' || board[row][col] !== 0 || isThinking || gameOver) {
+    if (
+      mode !== 'play' ||
+      board[row][col] !== 0 ||
+      isThinking ||
+      gameOver ||
+      (firstPlayer === AI_FIRST && aiLastMove == null)
+    ) {
       return
     }
 
@@ -448,7 +473,7 @@ function App() {
 
   function handleReset() {
     if (mode === 'play') {
-      resetPlayMode()
+      resetPlayMode(getNextFirstPlayer(firstPlayer))
       return
     }
     resetArenaBoard()
@@ -458,7 +483,8 @@ function App() {
   const secondaryLabel = mode === 'play' ? 'Heuristic' : 'Samples'
   const detailMetric = mode === 'play' ? `${formatReason(aiReason)} / d${aiCompletedDepth}` : formatWinner(arenaSummary?.latest_game?.winner ?? 0)
   const detailLabel = mode === 'play' ? `${formatDifficulty(difficulty)} reason` : 'Latest result'
-  const disabledBoard = mode === 'arena' || isThinking || gameOver
+  const waitingForAiOpening = mode === 'play' && firstPlayer === AI_FIRST && aiLastMove == null
+  const disabledBoard = mode === 'arena' || isThinking || gameOver || waitingForAiOpening
   const apiTarget = API_BASE_URL || 'Vite proxy /api'
 
   return (
@@ -570,11 +596,13 @@ function App() {
                   </option>
                 ))}
               </select>
-              <button type="button" className="primary-button" onClick={handleReset}>
+              <button type="button" className="primary-button" onClick={handleReset} disabled={isThinking}>
                 New game
               </button>
             </div>
-            <span className="hint-text">X is the player, O is the backend AI, board size is 15x15.</span>
+            <span className="hint-text">
+              X is the player, O is the backend AI. The first move alternates each new game.
+            </span>
 
             <div className="consultant-toggle-card">
               <label className="consultant-toggle-label" htmlFor="consultant-toggle">

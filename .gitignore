@@ -10,3 +10,26 @@ data/
 .DS_Store
 .env
 
+# Local AI-agent instructions and planning notes
+.codex/
+AGENTS.md
+docs/superpowers/
+
+# Internal reports, presentations, and reference documents
+PRESENTATION_*
+SLIDE_*
+REPORT_BTL*
+TEAM_TASK_CHECKLIST.md
+BAO_CAO*.md
+*.pdf
+*.pptx
+figures/
+
+# Generated caches, benchmarks, and arena datasets
+*.pkl
+benchmark_results.json
+arena/data/*.jsonl
+
+# Local training artifacts and notebooks
+model/
+notebooks/

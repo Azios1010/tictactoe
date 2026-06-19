@@ -334,11 +334,11 @@ button {
   font-weight: 700;
 }
 
-.stone-human {
+.stone-x {
   color: #b91c1c;
 }
 
-.stone-ai {
+.stone-o {
   color: #0f766e;
 }
 

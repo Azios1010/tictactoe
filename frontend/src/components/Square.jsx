@@ -5,7 +5,7 @@ function Square({ value, onClick, disabled, highlight, consultantInfo }) {
   return (
     <button type="button" className={className} onClick={onClick} disabled={disabled || value !== 0}>
       {value !== 0 ? (
-        <span className={`stone ${value === 1 ? 'stone-ai' : value === -1 ? 'stone-human' : ''}`}>
+        <span className={`stone ${value === -1 ? 'stone-x' : value === 1 ? 'stone-o' : ''}`}>
           {label}
         </span>
       ) : consultantInfo ? (
@@ -21,5 +21,4 @@ function Square({ value, onClick, disabled, highlight, consultantInfo }) {
 }
 
 export default Square
-
 

@@ -4,6 +4,7 @@ import FirstPlayerDialog from './components/FirstPlayerDialog'
 import {
   AI_FIRST,
   HUMAN_FIRST,
+  getPlayerStones,
   isValidFirstPlayer
 } from './playTurn'
 
@@ -96,6 +97,10 @@ function formatElapsed(value) {
   return `${value} ms`
 }
 
+function formatStone(value) {
+  return value === -1 ? 'X' : value === 1 ? 'O' : ''
+}
+
 function formatBackendStatus(value) {
   if (value === 'online') {
     return 'Online'
@@ -125,6 +130,8 @@ function App() {
   const [backendStatus, setBackendStatus] = useState('idle')
   const [difficulty, setDifficulty] = useState('medium')
   const [firstPlayer, setFirstPlayer] = useState(null)
+  const [aiStone, setAiStone] = useState(null)
+  const [humanStone, setHumanStone] = useState(null)
   const [showFirstPlayerDialog, setShowFirstPlayerDialog] = useState(true)
   const [arenaBatchSize, setArenaBatchSize] = useState(10)
   const [arenaSummary, setArenaSummary] = useState(null)
@@ -139,17 +146,17 @@ function App() {
 
 
   useEffect(() => {
-    if (mode !== 'play') {
+    if (mode !== 'play' || aiStone == null || humanStone == null) {
       return
     }
 
-    if (hasWinner(board, -1)) {
+    if (hasWinner(board, humanStone)) {
       setStatus('Player wins.')
       setGameOver(true)
       return
     }
 
-    if (hasWinner(board, 1)) {
+    if (hasWinner(board, aiStone)) {
       setStatus('AI wins.')
       setGameOver(true)
       return
@@ -159,7 +166,7 @@ function App() {
       setStatus('Draw.')
       setGameOver(true)
     }
-  }, [board, mode])
+  }, [board, mode, aiStone, humanStone])
 
   useEffect(() => {
     return () => {
@@ -173,16 +180,24 @@ function App() {
   }
 
   function resetPlayMode(nextFirstPlayer) {
-    if (!isValidFirstPlayer(nextFirstPlayer)) {
+    const players = getPlayerStones(nextFirstPlayer)
+    if (!players) {
       return
     }
 
     clearArenaPlaybackTimers()
     const emptyBoard = createEmptyBoard()
+    const { aiStone: nextAiStone, humanStone: nextHumanStone } = players
 
     setBoard(emptyBoard)
     setFirstPlayer(nextFirstPlayer)
-    setStatus(nextFirstPlayer === AI_FIRST ? 'AI is preparing the opening move...' : 'You move first as X.')
+    setAiStone(nextAiStone)
+    setHumanStone(nextHumanStone)
+    setStatus(
+      nextFirstPlayer === AI_FIRST
+        ? 'AI is preparing the opening move as X...'
+        : 'You move first as X.'
+    )
     setIsThinking(false)
     setGameOver(false)
     setLastMove(null)
@@ -197,7 +212,7 @@ function App() {
     setConsultantValue(0)
 
     if (nextFirstPlayer === AI_FIRST) {
-      void requestAiMove(emptyBoard)
+      void requestAiMove(emptyBoard, nextAiStone)
     }
   }
 
@@ -207,6 +222,7 @@ function App() {
       isThinking ||
       mode !== 'play' ||
       showFirstPlayerDialog ||
+      humanStone == null ||
       (firstPlayer === AI_FIRST && aiLastMove == null)
     ) {
       return
@@ -221,7 +237,7 @@ function App() {
         },
         body: JSON.stringify({
           board: currentBoard,
-          player: -1, // Recommend moves for human player (X)
+          player: humanStone,
           top_k: 3
         })
       })
@@ -255,6 +271,7 @@ function App() {
       gameOver ||
       isThinking ||
       showFirstPlayerDialog ||
+      humanStone == null ||
       (firstPlayer === AI_FIRST && aiLastMove == null)
     ) {
       setConsultantMoves([])
@@ -263,7 +280,7 @@ function App() {
     }
 
     void fetchConsultantAdvice(board)
-  }, [board, showConsultant, gameOver, isThinking, mode, firstPlayer, aiLastMove, showFirstPlayerDialog])
+  }, [board, showConsultant, gameOver, isThinking, mode, firstPlayer, aiLastMove, showFirstPlayerDialog, humanStone])
 
 
   function resetArenaBoard(message = 'Arena ready. Run self-play to collect new samples.') {
@@ -292,7 +309,11 @@ function App() {
     resetArenaBoard()
   }
 
-  async function requestAiMove(nextBoard) {
+  async function requestAiMove(nextBoard, activeAiStone = aiStone) {
+    if (activeAiStone !== 1 && activeAiStone !== -1) {
+      return
+    }
+
     setIsThinking(true)
     setStatus('AI is thinking...')
     setBackendStatus('thinking')
@@ -307,7 +328,7 @@ function App() {
         },
         body: JSON.stringify({
           board: nextBoard,
-          player: 1,
+          player: activeAiStone,
           difficulty
         })
       })
@@ -339,12 +360,14 @@ function App() {
       ])
       setBoard((currentBoard) => {
         const updatedBoard = cloneBoard(currentBoard)
-        updatedBoard[data.row][data.col] = 1
+        updatedBoard[data.row][data.col] = activeAiStone
         return updatedBoard
       })
       setAiLastMove({ row: data.row, col: data.col })
       setLastMove({ row: data.row, col: data.col })
-      setStatus(`AI played row ${data.row + 1}, col ${data.col + 1}. ${formatReason(data.reason ?? 'best_search_score')}.`)
+      setStatus(
+        `AI (${formatStone(activeAiStone)}) played row ${data.row + 1}, col ${data.col + 1}. ${formatReason(data.reason ?? 'best_search_score')}.`
+      )
     } catch (error) {
       setBackendStatus('offline')
       if (error instanceof TypeError) {
@@ -357,7 +380,7 @@ function App() {
     }
   }
 
-  async function reportGameResult(winner, history = aiMoveHistory) {
+  async function reportGameResult(winner, history = aiMoveHistory, activeAiStone = aiStone) {
     if (history.length === 0) {
       return
     }
@@ -371,6 +394,7 @@ function App() {
         body: JSON.stringify({
           difficulty,
           winner,
+          ai_player: activeAiStone,
           ai_moves: history
         })
       })
@@ -386,20 +410,22 @@ function App() {
       showFirstPlayerDialog ||
       isThinking ||
       gameOver ||
+      humanStone == null ||
+      aiStone == null ||
       (firstPlayer === AI_FIRST && aiLastMove == null)
     ) {
       return
     }
 
     const nextBoard = cloneBoard(board)
-    nextBoard[row][col] = -1
+    nextBoard[row][col] = humanStone
     setBoard(nextBoard)
     setLastMove({ row, col })
 
-    if (hasWinner(nextBoard, -1)) {
+    if (hasWinner(nextBoard, humanStone)) {
       setStatus('Player wins. The AI will remember this lost line.')
       setGameOver(true)
-      void reportGameResult(-1)
+      void reportGameResult(humanStone, aiMoveHistory, aiStone)
       return
     }
 
@@ -407,7 +433,7 @@ function App() {
       return
     }
 
-    void requestAiMove(nextBoard)
+    void requestAiMove(nextBoard, aiStone)
   }
 
   function playArenaReplay(game) {
@@ -625,7 +651,7 @@ function App() {
               </button>
             </div>
             <span className="hint-text">
-              X is the player, O is the backend AI. Choose who moves first for every new game.
+              The first mover plays X. You are currently {formatStone(humanStone) || 'unassigned'}.
             </span>
 
             <div className="consultant-toggle-card">

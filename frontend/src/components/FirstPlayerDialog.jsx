@@ -16,7 +16,7 @@ function FirstPlayerDialog({ open, onSelect }) {
       >
         <p className="eyebrow">New game</p>
         <h2 id="first-player-title">Who moves first?</h2>
-        <p id="first-player-description">You play X. The backend AI plays O.</p>
+        <p id="first-player-description">The first mover plays X. The second mover plays O.</p>
 
         <div className="first-player-actions">
           <button

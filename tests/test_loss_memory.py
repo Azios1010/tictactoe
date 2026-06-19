@@ -78,3 +78,19 @@ class LossMemoryTest(unittest.TestCase):
 
             self.assertEqual(not_recorded, 0)
             self.assertEqual(ai.loss_memory[ai.compute_search_hash(first_board, AI_STONE)][(7, 8)], 1)
+
+    def test_game_outcome_normalizes_loss_when_ai_plays_x(self) -> None:
+        board = empty_board()
+        board[7][7] = HUMAN_STONE
+        losing_move = (7, 8)
+        history = [{"board": board, "move": {"row": losing_move[0], "col": losing_move[1]}}]
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            ai = GomokuAI(memory_filename=Path(temp_dir) / "tt.pkl")
+
+            recorded = ai.record_game_outcome(history, winner=AI_STONE, player=HUMAN_STONE)
+            normalized_board = [[-cell for cell in row] for row in board]
+            board_key = ai.compute_search_hash(normalized_board, AI_STONE)
+
+            self.assertEqual(recorded, 1)
+            self.assertEqual(ai.loss_memory[board_key][losing_move], 1)

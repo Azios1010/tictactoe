@@ -68,8 +68,8 @@ def get_ai(difficulty: str) -> GomokuAI:
 
 
 class MoveRequest(BaseModel):
-    board: list[list[int]] = Field(..., description="15x15 matrix with 0 empty, -1 human, 1 AI")
-    player: int = Field(default=AI_STONE, description="Player controlled by the AI")
+    board: list[list[int]] = Field(..., description="15x15 matrix with 0 empty, -1 X, 1 O")
+    player: int = Field(default=AI_STONE, description="Board stone controlled by the AI")
     difficulty: str = Field(default="medium", description="AI difficulty: easy, medium, or hard")
 
     @field_validator("board")
@@ -124,7 +124,8 @@ class ReportedAiMove(BaseModel):
 
 class GameResultRequest(BaseModel):
     difficulty: str = Field(default="medium", description="AI difficulty used during the game")
-    winner: int = Field(..., description="-1 human, 1 AI, 0 draw")
+    winner: int = Field(..., description="Winning board stone: -1 X, 1 O, or 0 draw")
+    ai_player: int = Field(default=AI_STONE, description="Board stone controlled by the AI")
     ai_moves: list[ReportedAiMove] = Field(default_factory=list)
 
     @field_validator("difficulty")
@@ -139,6 +140,11 @@ class GameResultRequest(BaseModel):
             raise ValueError("Winner must be one of -1, 0, or 1.")
         return winner
 
+    @field_validator("ai_player")
+    @classmethod
+    def validate_ai_player(cls, player: int) -> int:
+        return MoveRequest.validate_player(player)
+
 
 class GameResultResponse(BaseModel):
     recorded_moves: int
@@ -146,7 +152,7 @@ class GameResultResponse(BaseModel):
 
 
 class ConsultationRequest(BaseModel):
-    board: list[list[int]] = Field(..., description="15x15 matrix with 0 empty, -1 human, 1 AI")
+    board: list[list[int]] = Field(..., description="15x15 matrix with 0 empty, -1 X, 1 O")
     player: int = Field(default=AI_STONE, description="Active player side to move")
     top_k: int = Field(default=3, description="Number of top moves to recommend")
 
@@ -214,7 +220,7 @@ def get_move(payload: MoveRequest) -> MoveResponse:
     ai = get_ai(payload.difficulty)
     analysis = ai.get_move_analysis(board=board, player=payload.player)
     move = analysis.move
-    evaluation = ai.evaluate_board(board)
+    evaluation = ai.evaluate_board_for_player(board, payload.player)
 
     if move is None:
         return MoveResponse(
@@ -252,7 +258,11 @@ def report_game_result(payload: GameResultRequest) -> GameResultResponse:
         }
         for move in payload.ai_moves
     ]
-    recorded_moves = ai.record_game_outcome(ai_move_records, winner=payload.winner)
+    recorded_moves = ai.record_game_outcome(
+        ai_move_records,
+        winner=payload.winner,
+        player=payload.ai_player,
+    )
     if recorded_moves:
         ai.save_memory()
 

@@ -169,8 +169,15 @@ class GomokuAI:
         moves = self.loss_memory.setdefault(board_key, {})
         moves[move] = moves.get(move, 0) + 1
 
-    def record_game_outcome(self, ai_moves: Iterable[dict[str, Any]], winner: int) -> int:
-        if winner != HUMAN_STONE:
+    def record_game_outcome(
+        self,
+        ai_moves: Iterable[dict[str, Any]],
+        winner: int,
+        player: int = AI_STONE,
+    ) -> int:
+        if player not in {AI_STONE, HUMAN_STONE}:
+            raise ValueError("Player must be either 1 or -1.")
+        if winner != -player:
             return 0
 
         recorded = 0
@@ -179,7 +186,7 @@ class GomokuAI:
             move = self._coerce_recorded_move(move_record.get("move", move_record))
             if not isinstance(board, list) or move is None:
                 continue
-            self.record_losing_move(board, move, AI_STONE)
+            self.record_losing_move(board, move, player)
             recorded += 1
         return recorded
 
@@ -192,6 +199,12 @@ class GomokuAI:
 
     def get_best_move(self, board: list[list[int]], player: int = AI_STONE) -> tuple[int, int] | None:
         return self.get_move_analysis(board, player).move
+
+    def evaluate_board_for_player(self, board: list[list[int]], player: int = AI_STONE) -> int:
+        if player not in {AI_STONE, HUMAN_STONE}:
+            raise ValueError("Player must be either 1 or -1.")
+        normalized = normalize_board(board, player) if player == HUMAN_STONE else board
+        return self.evaluate_board(normalized)
 
     def get_move_analysis(self, board: list[list[int]], player: int = AI_STONE) -> MoveAnalysis:
         if player not in {AI_STONE, HUMAN_STONE}:

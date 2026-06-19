@@ -3,13 +3,28 @@ import assert from 'node:assert/strict'
 import {
   AI_FIRST,
   HUMAN_FIRST,
-  getNextFirstPlayer
+  getPlayerStones,
+  isValidFirstPlayer
 } from './playTurn.js'
 
-test('new games alternate human, AI, then human again', () => {
-  const secondGame = getNextFirstPlayer(HUMAN_FIRST)
-  const thirdGame = getNextFirstPlayer(secondGame)
+test('dialog accepts the human and AI opening choices', () => {
+  assert.equal(isValidFirstPlayer(HUMAN_FIRST), true)
+  assert.equal(isValidFirstPlayer(AI_FIRST), true)
+})
 
-  assert.equal(secondGame, AI_FIRST)
-  assert.equal(thirdGame, HUMAN_FIRST)
+test('dialog rejects unknown opening choices', () => {
+  assert.equal(isValidFirstPlayer('random'), false)
+  assert.equal(isValidFirstPlayer(null), false)
+})
+
+test('the first mover owns X and the second mover owns O', () => {
+  assert.deepEqual(getPlayerStones(HUMAN_FIRST), {
+    humanStone: -1,
+    aiStone: 1
+  })
+  assert.deepEqual(getPlayerStones(AI_FIRST), {
+    humanStone: 1,
+    aiStone: -1
+  })
+  assert.equal(getPlayerStones('random'), null)
 })

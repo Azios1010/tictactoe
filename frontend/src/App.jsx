@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import Board from './components/Board'
+import FirstPlayerDialog from './components/FirstPlayerDialog'
 import {
   AI_FIRST,
   HUMAN_FIRST,
-  getNextFirstPlayer
+  isValidFirstPlayer
 } from './playTurn'
 
 const BOARD_SIZE = 15
@@ -111,7 +112,7 @@ function formatBackendStatus(value) {
 function App() {
   const [mode, setMode] = useState('play')
   const [board, setBoard] = useState(createEmptyBoard)
-  const [status, setStatus] = useState('You move first as X.')
+  const [status, setStatus] = useState('Choose who moves first.')
   const [isThinking, setIsThinking] = useState(false)
   const [gameOver, setGameOver] = useState(false)
   const [lastMove, setLastMove] = useState(null)
@@ -123,7 +124,8 @@ function App() {
   const [aiMoveHistory, setAiMoveHistory] = useState([])
   const [backendStatus, setBackendStatus] = useState('idle')
   const [difficulty, setDifficulty] = useState('medium')
-  const [firstPlayer, setFirstPlayer] = useState(HUMAN_FIRST)
+  const [firstPlayer, setFirstPlayer] = useState(null)
+  const [showFirstPlayerDialog, setShowFirstPlayerDialog] = useState(true)
   const [arenaBatchSize, setArenaBatchSize] = useState(10)
   const [arenaSummary, setArenaSummary] = useState(null)
   const [arenaPlayback, setArenaPlayback] = useState([])
@@ -170,7 +172,11 @@ function App() {
     playbackTimersRef.current = []
   }
 
-  function resetPlayMode(nextFirstPlayer = HUMAN_FIRST) {
+  function resetPlayMode(nextFirstPlayer) {
+    if (!isValidFirstPlayer(nextFirstPlayer)) {
+      return
+    }
+
     clearArenaPlaybackTimers()
     const emptyBoard = createEmptyBoard()
 
@@ -196,7 +202,13 @@ function App() {
   }
 
   async function fetchConsultantAdvice(currentBoard) {
-    if (gameOver || isThinking || mode !== 'play' || (firstPlayer === AI_FIRST && aiLastMove == null)) {
+    if (
+      gameOver ||
+      isThinking ||
+      mode !== 'play' ||
+      showFirstPlayerDialog ||
+      (firstPlayer === AI_FIRST && aiLastMove == null)
+    ) {
       return
     }
 
@@ -242,6 +254,7 @@ function App() {
       !showConsultant ||
       gameOver ||
       isThinking ||
+      showFirstPlayerDialog ||
       (firstPlayer === AI_FIRST && aiLastMove == null)
     ) {
       setConsultantMoves([])
@@ -250,7 +263,7 @@ function App() {
     }
 
     void fetchConsultantAdvice(board)
-  }, [board, showConsultant, gameOver, isThinking, mode, firstPlayer, aiLastMove])
+  }, [board, showConsultant, gameOver, isThinking, mode, firstPlayer, aiLastMove, showFirstPlayerDialog])
 
 
   function resetArenaBoard(message = 'Arena ready. Run self-play to collect new samples.') {
@@ -272,9 +285,10 @@ function App() {
   function switchMode(nextMode) {
     setMode(nextMode)
     if (nextMode === 'play') {
-      resetPlayMode(HUMAN_FIRST)
+      setShowFirstPlayerDialog(true)
       return
     }
+    setShowFirstPlayerDialog(false)
     resetArenaBoard()
   }
 
@@ -369,6 +383,7 @@ function App() {
     if (
       mode !== 'play' ||
       board[row][col] !== 0 ||
+      showFirstPlayerDialog ||
       isThinking ||
       gameOver ||
       (firstPlayer === AI_FIRST && aiLastMove == null)
@@ -473,10 +488,19 @@ function App() {
 
   function handleReset() {
     if (mode === 'play') {
-      resetPlayMode(getNextFirstPlayer(firstPlayer))
+      setShowFirstPlayerDialog(true)
       return
     }
     resetArenaBoard()
+  }
+
+  function handleFirstPlayerSelect(nextFirstPlayer) {
+    if (!isValidFirstPlayer(nextFirstPlayer)) {
+      return
+    }
+
+    setShowFirstPlayerDialog(false)
+    resetPlayMode(nextFirstPlayer)
   }
 
   const secondaryMetric = mode === 'play' ? aiEvaluation : arenaSummary?.samples ?? 0
@@ -484,7 +508,7 @@ function App() {
   const detailMetric = mode === 'play' ? `${formatReason(aiReason)} / d${aiCompletedDepth}` : formatWinner(arenaSummary?.latest_game?.winner ?? 0)
   const detailLabel = mode === 'play' ? `${formatDifficulty(difficulty)} reason` : 'Latest result'
   const waitingForAiOpening = mode === 'play' && firstPlayer === AI_FIRST && aiLastMove == null
-  const disabledBoard = mode === 'arena' || isThinking || gameOver || waitingForAiOpening
+  const disabledBoard = mode === 'arena' || showFirstPlayerDialog || isThinking || gameOver || waitingForAiOpening
   const apiTarget = API_BASE_URL || 'Vite proxy /api'
 
   return (
@@ -601,7 +625,7 @@ function App() {
               </button>
             </div>
             <span className="hint-text">
-              X is the player, O is the backend AI. The first move alternates each new game.
+              X is the player, O is the backend AI. Choose who moves first for every new game.
             </span>
 
             <div className="consultant-toggle-card">
@@ -668,6 +692,11 @@ function App() {
       <section className="board-panel">
         <Board board={board} onSquareClick={handleSquareClick} disabled={disabledBoard} lastMove={lastMove} consultantMoves={consultantMoves} />
       </section>
+
+      <FirstPlayerDialog
+        open={mode === 'play' && showFirstPlayerDialog}
+        onSelect={handleFirstPlayerSelect}
+      />
     </main>
   )
 }
